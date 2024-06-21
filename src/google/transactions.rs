@@ -19,8 +19,9 @@ pub struct Transaction {
     pub currency: String,
     pub local_amount: f64,
     pub local_currency: String,
-    // notes: String,
-    // description: String,
+    pub notes: Option<String>,
+    pub description: Option<String>,
+    pub category_split: Option<String>,
 }
 
 impl GoogleSheet {
@@ -28,7 +29,7 @@ impl GoogleSheet {
         &self,
         sheet_details: &SheetDetails,
     ) -> Result<Option<Vec<Transaction>>, AppError> {
-        let range = format!("{}!A:P", sheet_details.name);
+        let range = format!("{}!A:O", sheet_details.name);
 
         let result = self
             .hub
@@ -37,36 +38,42 @@ impl GoogleSheet {
             .doit()
             .await?;
 
+        // println!("Raw API Response: {:#?}", result);
+
         let values = match result.1.values {
             Some(values) => values,
             None => return Ok(None),
         };
 
-        let mut rows: Vec<Transaction> = Vec::new();
+        let mut transactions: Vec<Transaction> = Vec::new();
 
         for row in values.iter().skip(1) {
-            let data = Transaction {
-                id: parse_string(row[0].clone()),
+            let transaction = Transaction {
+                id: parse_string(row.get(0)).unwrap_or_default(),
                 date: parse_date(row[1].clone()),
-                payment_type: parse_string(row[3].clone()),
-                name: parse_string(row[4].clone()),
-                category: parse_string(row[6].clone()),
+                payment_type: parse_string(row.get(3)).unwrap_or_default(),
+                name: parse_string(row.get(4)).unwrap_or_default(),
+                category: parse_string(row.get(6)).unwrap_or_default(),
                 amount: parse_float(row[7].clone()),
-                currency: parse_string(row[8].clone()),
+                currency: parse_string(row.get(8)).unwrap_or_default(),
                 local_amount: parse_float(row[9].clone()),
-                local_currency: parse_string(row[10].clone()),
-                // notes: parse_string(row[11].clone()),
-                // description: parse_string(row[14].clone()),
+                local_currency: parse_string(row.get(10)).unwrap_or_default(),
+                notes: parse_string(row.get(11)),
+                description: parse_string(row.get(14)),
+                category_split: parse_string(row.get(15)),
             };
-            rows.push(data);
+            transactions.push(transaction);
         }
 
-        Ok(Some(rows))
+        Ok(Some(transactions))
     }
 }
 
-fn parse_string(id: Value) -> String {
-    id.to_string().replace("\"", "")
+fn parse_string(value: Option<&Value>) -> Option<String> {
+    value
+        .and_then(|v| v.as_str()) // Try to get the &str from Value
+        .filter(|s| !s.is_empty()) // Check if the string is not empty
+        .map(|s| s.to_string()) // Convert the &str to String
 }
 
 fn parse_float(amount: Value) -> f64 {
