@@ -1,25 +1,25 @@
 mod beancount;
+mod cli;
 mod error;
 mod google;
 
+use clap::Parser;
+use cli::{command, Cli, Commands};
 use error::AppError;
-
-use google::{load_ids, GoogleSheet};
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    let google = GoogleSheet::new().await?;
-    let sheet = load_ids()?;
+    let cli = Cli::parse();
 
-    // Process and print the sheet names
-    if let Some(sheets) = google.get_sheet_names(&sheet.personal.id).await? {
-        println!("{:?}", sheets);
-    };
-
-    let transactions = google.transactions(&sheet.personal).await?.unwrap();
-
-    for tx in transactions {
-        println!("{:#?}", tx);
+    match &cli.command {
+        Commands::Update {} => match command::update().await {
+            Ok(_) => {}
+            Err(e) => eprintln!("Error: {}", e),
+        },
+        Commands::Sheets {} => match command::sheets().await {
+            Ok(_) => {}
+            Err(e) => eprintln!("Error: {}", e),
+        },
     }
 
     Ok(())
