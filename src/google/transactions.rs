@@ -1,6 +1,8 @@
 //! Get transactions from a Google Sheet.
 
 use chrono::NaiveDate;
+use google_sheets4::{hyper::client::HttpConnector, hyper_rustls, Sheets};
+use hyper_rustls::HttpsConnector;
 use serde::Deserialize;
 use serde_json::value::Value;
 
@@ -31,16 +33,15 @@ pub struct CategorySplit {
 }
 
 impl GoogleSheet {
-    pub async fn transactions(
-        &self,
-        sheet_details: &SheetDetails,
+    pub(crate) async fn transactions(
+        hub: &Sheets<HttpsConnector<HttpConnector>>,
+        details: &SheetDetails,
     ) -> Result<Option<Vec<Transaction>>, Error> {
-        let range = format!("{}!A:P", sheet_details.name);
+        let range = format!("{}!A:P", &details.name);
 
-        let result = self
-            .hub
+        let result = hub
             .spreadsheets()
-            .values_get(&sheet_details.id, &range)
+            .values_get(&details.id, &range)
             .doit()
             .await?;
 
