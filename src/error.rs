@@ -14,4 +14,7 @@ pub enum AppError {
 
     #[error("Failed parse sheets: {0}")]
     GoogleError(#[from] google_sheets4::Error),
+
+    #[error("Failed to parse split category: {0}")]
+    CategoryParseError(String),
 }
