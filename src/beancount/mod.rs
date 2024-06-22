@@ -63,10 +63,27 @@ impl Beancount {
     }
 
     // Iniitialise the file system
-    // pub fn initialise_filesystem(&self) -> Result<(), Error> {
-    //     let path = self.settings.beancount_filepath.clone();
-    //     let parent = path.parent().ok_or(Error::PathError)?;
-    //     std::fs::create_dir_all(parent)?;
-    //     Ok(())
-    // }
+    pub fn initialise_filesystem(&self) -> Result<Option<String>, Error> {
+        let path = self.settings.root_dir.clone();
+        if !path.exists() {
+            std::fs::create_dir_all(path.clone())?;
+            return Ok(Some(format!(
+                "Created beanfile directory at: {}",
+                path.to_string_lossy()
+            )));
+        }
+
+        Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_config() {
+        let beancount = Beancount::from_config();
+        assert!(beancount.is_ok());
+    }
 }

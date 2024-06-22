@@ -3,3 +3,5 @@
 credentials.json
 tokencache.json
 sheet_ids.yaml
+
+beancount.yaml
