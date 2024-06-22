@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use serde::Deserialize;
 use serde_json::value::Value;
 
-use crate::errors::AppError;
+use crate::error::AppError;
 
 use super::{GoogleSheet, SheetDetails};
 

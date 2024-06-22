@@ -1,3 +1,4 @@
+.DS_Store
 /target
 credentials.json
 tokencache.json

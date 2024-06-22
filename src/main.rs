@@ -1,7 +1,8 @@
-mod errors;
+mod beancount;
+mod error;
 mod google;
 
-use errors::AppError;
+use error::AppError;
 
 use google::{load_ids, GoogleSheet};
 

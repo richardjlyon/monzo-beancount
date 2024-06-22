@@ -12,7 +12,7 @@ use google_sheets4::{
 use hyper_rustls::HttpsConnector;
 use serde::Deserialize;
 
-use crate::errors::AppError;
+use crate::error::AppError;
 
 /// A struct for accessing a Google Sheet.
 pub struct GoogleSheet {
