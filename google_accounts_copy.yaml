@@ -1,0 +1,7 @@
+- name: "personal"
+  sheet_name: "Personal Account Transactions"
+  sheet_id: "xxxx"
+
+- name: "business"
+  sheet_name: "Business Account Transactions"
+  sheet_id: xxxx"

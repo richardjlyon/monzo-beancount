@@ -4,7 +4,12 @@ use super::GoogleSheet;
 
 impl GoogleSheet {
     pub async fn sheets(&self) -> Result<Option<Vec<String>>, Error> {
-        let result = self.hub.spreadsheets().get(&self.id).doit().await?;
+        let result = self
+            .hub
+            .spreadsheets()
+            .get(&self.account.sheet_id)
+            .doit()
+            .await?;
 
         let sheets = match result.1.sheets {
             Some(sheets) => Some(

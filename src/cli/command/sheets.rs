@@ -1,15 +1,15 @@
 //! Sheets command
 
 use crate::error::AppError as Error;
-use crate::google::{load_sheets, GoogleSheet};
+use crate::google::config::load_sheets;
+use crate::google::GoogleSheet;
 
 pub async fn sheets() -> Result<(), Error> {
-    let sheet = load_sheets()?;
-    let personal = GoogleSheet::new(sheet.personal).await?;
-    let business = GoogleSheet::new(sheet.business).await?;
-
-    println!("{:?}", personal.sheets().await?);
-    println!("{:?}", business.sheets().await?);
+    let sheets = load_sheets()?;
+    for sheet in sheets {
+        let google_sheet = GoogleSheet::new(sheet).await?;
+        println!("{:?}", google_sheet.sheets().await?);
+    }
 
     Ok(())
 }

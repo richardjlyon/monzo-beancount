@@ -2,6 +2,6 @@
 /target
 credentials.json
 tokencache.json
-sheet_ids.yaml
+google_accounts.yaml
 
 beancount.yaml

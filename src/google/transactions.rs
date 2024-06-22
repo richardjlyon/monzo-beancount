@@ -8,7 +8,7 @@ use serde_json::value::Value;
 
 use crate::error::AppError as Error;
 
-use super::{GoogleSheet, SheetDetails};
+use super::{config::GoogleAccount, GoogleSheet};
 
 #[derive(Debug, Deserialize)]
 pub struct Transaction {
@@ -35,13 +35,13 @@ pub struct CategorySplit {
 impl GoogleSheet {
     pub(crate) async fn transactions(
         hub: &Sheets<HttpsConnector<HttpConnector>>,
-        details: &SheetDetails,
+        account: &GoogleAccount,
     ) -> Result<Option<Vec<Transaction>>, Error> {
-        let range = format!("{}!A:P", &details.name);
+        let range = format!("{}!A:P", &account.sheet_name);
 
         let result = hub
             .spreadsheets()
-            .values_get(&details.id, &range)
+            .values_get(&account.sheet_id, &range)
             .doit()
             .await?;
 
