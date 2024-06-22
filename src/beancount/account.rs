@@ -7,7 +7,7 @@ use convert_case::{Case, Casing};
 use serde::Deserialize;
 
 /// Represents permissable Beancount account types
-#[derive(Debug, Clone, Deserialize, PartialEq, strum_macros::Display)]
+#[derive(Debug, Clone, Deserialize, Eq, PartialEq, Hash, strum_macros::Display)]
 pub enum AccountType {
     Assets,
     Liabilities,
@@ -23,7 +23,7 @@ pub enum AccountType {
 /// [Equities][Currency][AccountName][EquityName] e.g. Equities:GBP:OpeningBalances
 /// [Income][Currency][AccountName][IncomeName] e.g. Income:GBP:Salary:BP
 /// [Expenses][Currency][AccountName][ExpenseName] e.g. Expenses:GBP:Personal:Groceries
-#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, Eq, PartialEq, Hash)]
 pub struct Account {
     pub(crate) account_type: AccountType,
     pub(crate) country: String,

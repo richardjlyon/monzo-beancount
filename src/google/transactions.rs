@@ -17,9 +17,9 @@ pub struct Transaction {
     pub payment_type: String,
     pub name: String,
     pub category: String,
-    pub amount: f64,
+    pub amount: i64,
     pub currency: String,
-    pub local_amount: f64,
+    pub local_amount: i64,
     pub local_currency: String,
     pub notes: Option<String>,
     pub description: Option<String>,
@@ -33,7 +33,11 @@ pub struct CategorySplit {
 }
 
 impl GoogleSheet {
-    pub(crate) async fn transactions(
+    pub fn transactions(&self) -> Option<&Vec<Transaction>> {
+        self.transactions.as_ref()
+    }
+
+    pub(crate) async fn load_transactions(
         hub: &Sheets<HttpsConnector<HttpConnector>>,
         account: &GoogleAccount,
     ) -> Result<Option<Vec<Transaction>>, Error> {
@@ -79,13 +83,18 @@ impl GoogleSheet {
 fn parse_string(value: Option<&Value>) -> Option<String> {
     value
         .and_then(|v| v.as_str()) // Try to get the &str from Value
-        .filter(|s| !s.is_empty()) // Check if the string is not empty
+        .filter(|s| !s.is_empty())
+        .map(|s| s.replace("/", "_"))
+        .map(|s| s.replace("&", "")) // Check if the string is not empty
         .map(|s| s.to_string()) // Convert the &str to String
 }
 
-fn parse_float(amount: Value) -> f64 {
-    let amount_str = amount.to_string().replace("\"", "");
-    amount_str.parse::<f64>().unwrap()
+// returns a minor unit currency i.e. "-500.00" -> -50000
+fn parse_float(amount: Value) -> i64 {
+    let cleaned_input = amount.to_string().replace("\"", "").replace(".", "");
+    let value: i64 = cleaned_input.parse().expect("Invalid number format");
+
+    value
 }
 
 fn parse_date(date: Value) -> NaiveDate {
@@ -150,7 +159,7 @@ mod tests {
     #[test]
     fn test_parse_float() {
         let value = Value::String("1.23".to_string());
-        assert_eq!(parse_float(value), 1.23);
+        assert_eq!(parse_float(value), 123);
     }
 
     #[test]

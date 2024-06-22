@@ -2,6 +2,7 @@
 //!
 
 pub mod config;
+pub mod expense_accounts;
 pub mod sheets;
 pub mod transactions;
 
@@ -50,7 +51,7 @@ impl GoogleSheet {
             auth,
         );
 
-        let transactions = GoogleSheet::transactions(&hub, &account).await?;
+        let transactions = GoogleSheet::load_transactions(&hub, &account).await?;
 
         Ok(GoogleSheet {
             hub,

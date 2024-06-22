@@ -7,8 +7,10 @@ use serde::Deserialize;
 use crate::error::AppError as Error;
 
 /// A struct to represent a Google Sheet account
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct GoogleAccount {
+    pub country: String,
+    pub institution: String,
     pub name: String,
     pub sheet_name: String,
     pub sheet_id: String,
@@ -35,7 +37,7 @@ mod tests {
     #[tokio::test]
     async fn new() {
         let sheets = load_sheets().unwrap();
-        let sheet = sheets[0];
+        let sheet = sheets[0].clone();
 
         let personal = GoogleSheet::new(sheet).await.unwrap();
 

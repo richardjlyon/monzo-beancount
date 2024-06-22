@@ -22,7 +22,7 @@ pub enum Directive {
 impl Directive {
     #[must_use]
     pub fn to_formatted_string(&self) -> String {
-        let account_width = 40;
+        let account_width = 50;
         match self {
             Directive::Comment(comment) => format!("\n* {}\n\n", comment.to_case(Case::Title)),
             Directive::OpenAccount(date, account, comment) => {
@@ -109,7 +109,7 @@ mod tests {
         // Assert
         assert_eq!(
             directive.to_formatted_string(),
-            "2024-06-13 open Assets:GBP:Monzo:Personal                GBP\n"
+            "2024-06-13 open Assets:GBP:Monzo:Personal                          GBP\n"
         );
     }
 
@@ -130,7 +130,7 @@ mod tests {
         // Assert
         assert_eq!(
             directive.to_formatted_string(),
-            "; Initial Deposit.\n2024-06-13 open Assets:GBP:Monzo:Personal                GBP\n"
+            "; Initial Deposit.\n2024-06-13 open Assets:GBP:Monzo:Personal                          GBP\n"
         );
     }
 
@@ -150,7 +150,7 @@ mod tests {
         // Assert
         assert_eq!(
             directive.to_formatted_string(),
-            "2024-06-13 close Assets:GBP:Monzo:Personal               \n"
+            "2024-06-13 close Assets:GBP:Monzo:Personal                         \n"
         );
     }
 
@@ -171,7 +171,7 @@ mod tests {
         // Assert
         assert_eq!(
             directive.to_formatted_string(),
-            "; To Close.\n2024-06-13 close Assets:GBP:Monzo:Personal               \n"
+            "; To Close.\n2024-06-13 close Assets:GBP:Monzo:Personal                         \n"
         );
     }
 }
