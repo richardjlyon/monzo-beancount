@@ -117,6 +117,7 @@ mod tests {
             institution: "Monzo".to_string(),
             account: "Groceries".to_string(),
             sub_account: None,
+            transaction_id: None,
         };
 
         let asset_account = Account {
@@ -125,6 +126,7 @@ mod tests {
             institution: "Monzo".to_string(),
             account: "Personal".to_string(),
             sub_account: None,
+            transaction_id: None,
         };
 
         let liability_posting = Posting {

@@ -1,14 +1,15 @@
 //! Functionality for processing inputs and producing a set of beancount accounts.
 //!
 
+pub(crate) mod classifier;
 pub(crate) mod csv_directives;
 pub(crate) mod google_sheet_directives;
 pub(crate) mod manual_directives;
 pub(crate) mod open_directives;
 
-use std::collections::HashSet;
 use std::{fs::File, io::Write};
 
+use classifier::{classify_transaction, Classification};
 use config::Case;
 use convert_case::Casing;
 use rusty_money::{iso, Money};
@@ -67,64 +68,66 @@ fn write_directives(file: &mut File, directives: Vec<Directive>) -> Result<(), E
     for d in directives {
         file.write_all(d.to_formatted_string().as_bytes())?;
     }
-    // let _ = file.write_all("\n".as_bytes())?;
 
     Ok(())
 }
 
 fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result<Posting, Error> {
-    let mut amount = -tx.amount as f64;
-
     let mut account = BeancountAccount {
         account_type: AccountType::Expenses,
         country: account.country.clone(),
         institution: account.institution.clone(),
         account: account.name.clone().to_case(Case::Pascal),
         sub_account: Some(tx.category.clone().to_case(Case::Pascal)),
+        transaction_id: None,
     };
+    let mut amount = -tx.amount as f64;
 
-    match tx.category.as_str() {
-        "Transfers" => {
-            // pot tranfer
-            if tx.payment_type == "Pot transfer" {
-                account.account_type = AccountType::Assets;
-                account.sub_account = Some(tx.name.clone());
-
-            // equity opening balance
-            } else if tx
-                .description
-                .clone()
-                .unwrap_or_default()
-                .starts_with("Monzo-")
-            {
+    match classify_transaction(tx)? {
+        Some(classification) => match classification {
+            Classification::IncomeGeneral => {
+                // OK
                 account.account_type = AccountType::Assets;
                 account.sub_account = None;
                 amount = tx.amount as f64;
-
-            // named asset
-            } else if let Some(matching_asset) = matching_asset(&tx.name) {
+            }
+            Classification::IncomeAccount(institution_account) => {
                 account.account_type = AccountType::Assets;
-                account.institution = matching_asset.institution;
+                account.institution = institution_account.institution;
                 account.account = tx.name.clone();
                 account.sub_account = None;
-
-            // other asset
-            } else {
+                amount = tx.amount as f64;
+            }
+            Classification::Savings => {
+                account.account_type = AccountType::Assets;
+                account.sub_account = Some("Savings".to_string());
+            }
+            Classification::TransferOpeningBalance => {
                 account.account_type = AccountType::Assets;
                 account.sub_account = None;
+                amount = tx.amount as f64;
             }
-        }
-        "Savings" => {
-            account.account_type = AccountType::Assets;
-            account.sub_account = Some("Savings".to_string());
-        }
-        "Income" => {
-            account.account_type = AccountType::Assets;
-            account.sub_account = None;
-            amount = tx.amount as f64;
-        }
-        _ => {}
+            Classification::TransferPot => {
+                account.account_type = AccountType::Assets;
+                account.sub_account = Some(tx.name.clone());
+            }
+            Classification::TransferAsset(asset_account) => {
+                // OK
+                account.account_type = AccountType::Assets;
+                account.institution = asset_account.institution;
+                account.account = asset_account.account.clone();
+                account.sub_account = None;
+            }
+        },
+        None => {}
     }
+
+    // if tx.id == "tx_0000AdVRzCp69ZxOqfBdXl".to_string() {
+    //     println!("TO:");
+    //     println!("{:?}", classify_transaction(tx));
+    //     println!("{:?}", tx);
+    //     println!("{:#?}", account);
+    // }
 
     Ok(Posting {
         account,
@@ -143,46 +146,43 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
         institution: account.institution.clone(),
         account: account.name.clone().to_case(Case::Pascal),
         sub_account: None,
+        transaction_id: Some(tx.id.clone()),
     };
 
-    match tx.category.as_str() {
-        "Transfers" => {
-            // pot transfer
-            if tx.payment_type == "Pot transfer" {
-                account.account_type = AccountType::Assets;
-                account.sub_account = None;
-
-            // equity opening balance
-            } else if let Some(description) = &tx.description {
-                if description.starts_with("Monzo-") {
-                    account.account_type = AccountType::Equity;
-                    account.account = "OpeningBalances".to_string();
-                    amount = -tx.amount as f64;
-                }
-            } else {
-                account.account_type = AccountType::Expenses;
-                account.sub_account = None;
-            }
-        }
-        "Savings" => {
-            account.account_type = AccountType::Assets;
-            account.sub_account = None;
-        }
-        "Income" => {
-            if let Some(matching_income) = matching_income(&tx.name) {
+    match classify_transaction(tx)? {
+        Some(classification) => match classification {
+            Classification::IncomeGeneral => {
                 account.account_type = AccountType::Income;
-                account.institution = matching_income.institution;
+                amount = -tx.amount as f64;
+            }
+            Classification::IncomeAccount(income_account) => {
+                account.account_type = AccountType::Income;
+                account.institution = income_account.institution;
                 account.account = tx.name.clone();
-                account.sub_account = None;
-                amount = -tx.amount as f64;
-            } else {
-                account.account_type = AccountType::Income;
-                account.sub_account = None;
                 amount = -tx.amount as f64;
             }
-        }
-        _ => {}
+            Classification::Savings => {
+                account.account_type = AccountType::Assets;
+            }
+            Classification::TransferOpeningBalance => {
+                account.account_type = AccountType::Equity;
+                account.account = "OpeningBalances".to_string();
+                amount = -tx.amount as f64;
+            }
+            Classification::TransferPot => {
+                account.account_type = AccountType::Assets;
+            }
+            Classification::TransferAsset(_asset_account) => {}
+        },
+        None => {}
     }
+
+    // if tx.id == "tx_0000AdVRzCp69ZxOqfBdXl".to_string() {
+    //     println!("\nFROM:");
+    //     println!("{:?}", classify_transaction(tx));
+    //     println!("{:?}", tx);
+    //     println!("{:#?}", account);
+    // }
 
     Ok(Posting {
         account,
@@ -213,9 +213,10 @@ fn prepare_transaction_comment(tx: &GoogleTransaction) -> Option<String> {
 }
 
 fn prepare_transaction_notes(tx: &GoogleTransaction) -> String {
+    // FIXME remove id after debugging
     let merchant_name = tx.name.clone();
 
-    format!("{}", merchant_name)
+    format!("{} - {}", merchant_name, tx.id)
 }
 
 fn prepare_amount(tx: &GoogleTransaction) -> String {
@@ -230,58 +231,20 @@ fn prepare_amount(tx: &GoogleTransaction) -> String {
     }
 }
 
-fn get_filtered_assets() -> Result<Vec<BeancountAccount>, Error> {
-    let bc = Beancount::from_config()?;
-    let assets = bc.assets.unwrap();
-    let unwanted_accounts = vec!["Business", "Personal"];
+fn from_account_general_income(
+    account: &GoogleAccount,
+    tx: &GoogleTransaction,
+) -> (BeancountAccount, f64) {
+    let account = BeancountAccount {
+        account_type: AccountType::Income,
+        country: account.country.clone(),
+        institution: account.institution.clone(),
+        account: account.name.clone().to_case(Case::Pascal),
+        sub_account: None,
+        transaction_id: None,
+    };
 
-    let unique_accounts: HashSet<BeancountAccount> = assets
-        .into_iter()
-        .filter(|a| !unwanted_accounts.contains(&a.account.as_str()))
-        .collect();
+    let amount = -tx.amount as f64;
 
-    let unique_accounts_vec: Vec<BeancountAccount> = unique_accounts.into_iter().collect();
-
-    Ok(unique_accounts_vec)
-}
-
-fn matching_asset(account_to_find: &str) -> Option<BeancountAccount> {
-    let filtered_assets = get_filtered_assets().unwrap();
-    let matching_assets: Vec<BeancountAccount> = filtered_assets
-        .iter()
-        .filter(|&asset| asset.account == account_to_find)
-        .cloned() // Use `cloned` to get ownership of the filtered assets
-        .collect();
-    match matching_assets.len() {
-        1 => Some(matching_assets[0].clone()),
-        _ => None,
-    }
-}
-
-fn get_filtered_income() -> Result<Vec<BeancountAccount>, Error> {
-    let bc = Beancount::from_config()?;
-    let income = bc.income.unwrap();
-    let unwanted_accounts = vec!["Business", "Personal"];
-
-    let unique_accounts: HashSet<BeancountAccount> = income
-        .into_iter()
-        .filter(|a| !unwanted_accounts.contains(&a.account.as_str()))
-        .collect();
-
-    let unique_accounts_vec: Vec<BeancountAccount> = unique_accounts.into_iter().collect();
-
-    Ok(unique_accounts_vec)
-}
-
-fn matching_income(account_to_find: &str) -> Option<BeancountAccount> {
-    let filtered_income = get_filtered_income().unwrap();
-    let matching_income: Vec<BeancountAccount> = filtered_income
-        .iter()
-        .filter(|&income| income.account == account_to_find)
-        .cloned() // Use `cloned` to get ownership of the filtered assets
-        .collect();
-    match matching_income.len() {
-        1 => Some(matching_income[0].clone()),
-        _ => None,
-    }
+    (account, amount)
 }

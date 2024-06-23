@@ -84,6 +84,7 @@ mod tests {
             institution: "Monzo".to_string(),
             account: "Personal".to_string(),
             sub_account: None,
+            transaction_id: None,
         };
         // Act
         let directive = Directive::Open(date, account, None);
@@ -104,6 +105,7 @@ mod tests {
             institution: "Monzo".to_string(),
             account: "Personal".to_string(),
             sub_account: None,
+            transaction_id: None,
         };
         let comment = Some("Initial Deposit".to_string());
         // Act
@@ -125,6 +127,7 @@ mod tests {
             institution: "Monzo".to_string(),
             account: "Personal".to_string(),
             sub_account: None,
+            transaction_id: None,
         };
         // Act
         let directive = Directive::Close(date, account, None);
@@ -145,6 +148,7 @@ mod tests {
             institution: "Monzo".to_string(),
             account: "Personal".to_string(),
             sub_account: None,
+            transaction_id: None,
         };
         let comment = Some("To Close".to_string());
         // Act

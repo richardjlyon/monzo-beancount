@@ -10,7 +10,7 @@ use crate::error::AppError as Error;
 
 use super::{config::GoogleAccount, GoogleSheet};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct Transaction {
     pub id: String,
     pub date: NaiveDate,

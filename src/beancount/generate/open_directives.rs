@@ -51,6 +51,7 @@ fn open_equity_account() -> Result<Vec<Directive>, Error> {
         institution: String::new(),
         account: "Opening Balances".to_string(),
         sub_account: None,
+        transaction_id: None,
     };
 
     directives.push(Directive::Open(bc.start_date, equity_account.clone(), None));
@@ -128,6 +129,7 @@ async fn open_expenses() -> Result<Vec<Directive>, Error> {
                 institution: account.institution.clone(),
                 account: account.name.clone(),
                 sub_account: Some(expense_account),
+                transaction_id: None,
             };
             directives.push(Directive::Open(open_date, beanaccount, None));
         }

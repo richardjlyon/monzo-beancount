@@ -25,6 +25,7 @@ pub struct Account {
     pub(crate) institution: String,
     pub(crate) account: String,
     pub(crate) sub_account: Option<String>,
+    pub(crate) transaction_id: Option<String>,
 }
 
 impl fmt::Display for Account {

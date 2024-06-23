@@ -30,7 +30,6 @@ pub struct Beancount {
 #[derive(Debug, Deserialize)]
 struct BeanSettings {
     pub root_dir: PathBuf,
-    pub csv_dir: PathBuf,
     pub start_date: NaiveDate,
     pub custom_categories: Option<HashMap<String, String>>,
     pub assets: Option<Vec<Account>>,
