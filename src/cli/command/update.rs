@@ -26,10 +26,10 @@ pub async fn update() -> Result<(), Error> {
 
     // -- Initialise the file system -----------------------------------------------------
 
-    match bean.initialise_filesystem()? {
-        Some(message) => println!("{}", message),
-        None => {}
-    };
+    // match bean.initialise_filesystem()? {
+    //     Some(message) => println!("{}", message),
+    //     None => {}
+    // };
 
     // -- Open Equity Accounts -----------------------------------------------------
 
@@ -70,7 +70,7 @@ pub async fn update() -> Result<(), Error> {
 
     // -- Write directives to file -----------------------------------------------------
 
-    let file_path = bean.settings.root_dir.join("report.beancount");
+    let file_path = bean.file_paths.root_dir.join("report.beancount");
     let mut file = File::create(file_path)?;
     for d in directives {
         file.write_all(d.to_formatted_string().as_bytes())?;
@@ -91,21 +91,17 @@ fn open_equity_account() -> Result<Vec<Directive>, Error> {
         sub_account: None,
     };
 
-    directives.push(Directive::Open(
-        bc.settings.start_date,
-        equity_account.clone(),
-        None,
-    ));
+    directives.push(Directive::Open(bc.start_date, equity_account.clone(), None));
 
     Ok(directives)
 }
 
 fn open_config_assets() -> Result<Vec<Directive>, Error> {
     let bc = Beancount::from_config()?;
-    let open_date = bc.settings.start_date;
+    let open_date = bc.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    match bc.settings.assets {
+    match bc.assets {
         Some(asset_accounts) => {
             for asset_account in asset_accounts {
                 directives.push(Directive::Open(open_date, asset_account, None));
@@ -119,10 +115,10 @@ fn open_config_assets() -> Result<Vec<Directive>, Error> {
 
 fn open_config_income() -> Result<Vec<Directive>, Error> {
     let bc = Beancount::from_config()?;
-    let open_date = bc.settings.start_date;
+    let open_date = bc.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    match bc.settings.income {
+    match bc.income {
         Some(income_account) => {
             for income_account in income_account {
                 directives.push(Directive::Open(open_date, income_account, None));
@@ -137,15 +133,15 @@ fn open_config_income() -> Result<Vec<Directive>, Error> {
 // Open a liability account for each config file entity
 async fn open_config_liabilities() -> Result<Vec<Directive>, Error> {
     let bc = Beancount::from_config()?;
-    let open_date = bc.settings.start_date;
+    let open_date = bc.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    if bc.settings.liabilities.is_none() {
+    if bc.liabilities.is_none() {
         return Ok(directives);
     }
 
     // open configured liabilities
-    for account in bc.settings.liabilities.unwrap() {
+    for account in bc.liabilities.unwrap() {
         directives.push(Directive::Open(open_date, account, None));
     }
 
@@ -155,7 +151,7 @@ async fn open_config_liabilities() -> Result<Vec<Directive>, Error> {
 // Open expense accounts for each Category in the Google Sheets
 async fn open_expenses() -> Result<Vec<Directive>, Error> {
     let bc = Beancount::from_config()?;
-    let open_date = bc.settings.start_date;
+    let open_date = bc.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
     let accounts = load_sheets()?;
@@ -366,7 +362,7 @@ fn prepare_amount(tx: &GoogleTransaction) -> String {
 
 fn get_filtered_assets() -> Result<Vec<BeancountAccount>, Error> {
     let bc = Beancount::from_config()?;
-    let assets = bc.settings.assets.unwrap();
+    let assets = bc.assets.unwrap();
     let unwanted_accounts = vec!["Business", "Personal"];
 
     let unique_accounts: HashSet<BeancountAccount> = assets
@@ -394,7 +390,7 @@ fn matching_asset(account_to_find: &str) -> Option<BeancountAccount> {
 
 fn get_filtered_income() -> Result<Vec<BeancountAccount>, Error> {
     let bc = Beancount::from_config()?;
-    let income = bc.settings.income.unwrap();
+    let income = bc.income.unwrap();
     let unwanted_accounts = vec!["Business", "Personal"];
 
     let unique_accounts: HashSet<BeancountAccount> = income
