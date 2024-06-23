@@ -12,10 +12,11 @@ async fn main() -> Result<(), AppError> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Commands::Update {} => match command::update().await {
+        Commands::Generate {} => match command::generate().await {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),
         },
+
         Commands::Sheets {} => match command::sheets().await {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),

@@ -1,205 +1,75 @@
-//! Update transactions command
+//! Functionality for processing inputs and producing a set of beancount accounts.
+//!
+
+pub(crate) mod csv_directives;
+pub(crate) mod google_sheet_directives;
+pub(crate) mod manual_directives;
+pub(crate) mod open_directives;
 
 use std::collections::HashSet;
-use std::fs::File;
-use std::io::Write;
+use std::{fs::File, io::Write};
 
 use config::Case;
 use convert_case::Casing;
 use rusty_money::{iso, Money};
 
-use crate::beancount::{
+use crate::google::transactions::Transaction as GoogleTransaction;
+use crate::{error::AppError as Error, google::config::GoogleAccount};
+
+use super::{
     account::{Account as BeancountAccount, AccountType},
     directive::Directive,
     transaction::{Posting, Postings, Transaction as BeancountTransaction},
     Beancount,
 };
-use crate::error::AppError as Error;
-use crate::google;
-use crate::google::config::{load_sheets, GoogleAccount};
-use crate::google::transactions::Transaction as GoogleTransaction;
 
-pub async fn update() -> Result<(), Error> {
-    let mut directives: Vec<Directive> = Vec::new();
+use csv_directives::csv_directives;
+use google_sheet_directives::google_sheet_directives;
+use manual_directives::manual_directives;
+use open_directives::open_directives;
 
-    let bean = Beancount::from_config()?;
+impl Beancount {
+    /// Process the input and produce a set of Beancount accounts
+    pub async fn generate(&self) -> Result<(), Error> {
+        let option_directives = option_directives();
 
-    // -- Initialise the file system -----------------------------------------------------
+        let open_directives = open_directives().await?;
 
-    // match bean.initialise_filesystem()? {
-    //     Some(message) => println!("{}", message),
-    //     None => {}
-    // };
+        let mut transaction_directives = google_sheet_directives().await?;
+        transaction_directives.extend(csv_directives()?);
+        transaction_directives.extend(manual_directives()?);
 
-    // -- Open Equity Accounts -----------------------------------------------------
+        // TODO: sort transaction_directives by date
 
-    directives.push(Directive::Comment("equity accounts".to_string()));
-    directives.extend(open_equity_account()?);
+        // write beancount files to disk
+        let file_path = self.file_paths.root_dir.join("main.beancount");
+        let mut file = File::create(file_path)?;
 
-    // -- Open Asset Accounts --------------------------------------------------------------
+        write_directives(&mut file, option_directives)?;
+        write_directives(&mut file, open_directives)?;
+        write_directives(&mut file, transaction_directives)?;
 
-    directives.push(Directive::Comment("asset accounts".to_string()));
-    directives.extend(open_config_assets()?);
+        Ok(())
+    }
+}
 
-    // Open Liability Accounts ---------------------------------------------------------
+fn option_directives() -> Vec<Directive> {
+    vec![
+        Directive::Option(
+            "title".to_string(),
+            "My Excellent Beancount File".to_string(),
+        ),
+        Directive::Option("operating_currency".to_string(), "GBP".to_string()),
+    ]
+}
 
-    directives.push(Directive::Comment("liability accounts".to_string()));
-    directives.extend(open_config_liabilities().await?);
-
-    // -- Open Income Accounts ---------------------------------------------------------
-
-    directives.push(Directive::Comment("income accounts".to_string()));
-    directives.extend(open_config_income()?);
-
-    // -- Open Expense Accounts  ---------------------------------------------------------
-
-    directives.push(Directive::Comment("Expense accounts".to_string()));
-    directives.extend(open_expenses().await?);
-
-    // -- Post Sheet Transactions---------------------------------------------------------
-
-    directives.push(Directive::Comment("transactions".to_string()));
-    directives.extend(post_transactions().await?);
-
-    // push transactions from google sheets
-    // push transactions from Pot CSV files
-
-    // for tx in transactions {
-    //     println!("{:#?}", tx);
-    // }
-
-    // -- Write directives to file -----------------------------------------------------
-
-    let file_path = bean.file_paths.root_dir.join("report.beancount");
-    let mut file = File::create(file_path)?;
+fn write_directives(file: &mut File, directives: Vec<Directive>) -> Result<(), Error> {
     for d in directives {
         file.write_all(d.to_formatted_string().as_bytes())?;
     }
+    // let _ = file.write_all("\n".as_bytes())?;
 
     Ok(())
-}
-
-fn open_equity_account() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let mut directives: Vec<Directive> = Vec::new();
-
-    let equity_account = BeancountAccount {
-        account_type: AccountType::Equity,
-        country: "GBP".to_string(),
-        institution: String::new(),
-        account: "Opening Balances".to_string(),
-        sub_account: None,
-    };
-
-    directives.push(Directive::Open(bc.start_date, equity_account.clone(), None));
-
-    Ok(directives)
-}
-
-fn open_config_assets() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
-    let mut directives: Vec<Directive> = Vec::new();
-
-    match bc.assets {
-        Some(asset_accounts) => {
-            for asset_account in asset_accounts {
-                directives.push(Directive::Open(open_date, asset_account, None));
-            }
-        }
-        None => (),
-    }
-
-    Ok(directives)
-}
-
-fn open_config_income() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
-    let mut directives: Vec<Directive> = Vec::new();
-
-    match bc.income {
-        Some(income_account) => {
-            for income_account in income_account {
-                directives.push(Directive::Open(open_date, income_account, None));
-            }
-        }
-        None => (),
-    }
-
-    Ok(directives)
-}
-
-// Open a liability account for each config file entity
-async fn open_config_liabilities() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
-    let mut directives: Vec<Directive> = Vec::new();
-
-    if bc.liabilities.is_none() {
-        return Ok(directives);
-    }
-
-    // open configured liabilities
-    for account in bc.liabilities.unwrap() {
-        directives.push(Directive::Open(open_date, account, None));
-    }
-
-    Ok(directives)
-}
-
-// Open expense accounts for each Category in the Google Sheets
-async fn open_expenses() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
-    let mut directives: Vec<Directive> = Vec::new();
-
-    let accounts = load_sheets()?;
-
-    for account in accounts {
-        let sheet = google::GoogleSheet::new(account.clone()).await?;
-        let expense_accounts = sheet.expense_accounts().await?;
-        for expense_account in expense_accounts {
-            let beanaccount = BeancountAccount {
-                account_type: AccountType::Expenses,
-                country: account.country.clone(),
-                institution: account.institution.clone(),
-                account: account.name.clone(),
-                sub_account: Some(expense_account),
-            };
-            directives.push(Directive::Open(open_date, beanaccount, None));
-        }
-    }
-
-    Ok(directives)
-}
-
-async fn post_transactions() -> Result<Vec<Directive>, Error> {
-    let mut directives: Vec<Directive> = Vec::new();
-
-    let accounts = load_sheets()?;
-
-    for account in accounts {
-        let sheet = google::GoogleSheet::new(account.clone()).await?;
-
-        if let Some(transactions) = sheet.transactions() {
-            for tx in transactions {
-                let to_posting = prepare_to_posting(&account, tx)?;
-                let from_posting = prepare_from_posting(&account, tx)?;
-
-                let postings = Postings {
-                    to: to_posting,
-                    from: from_posting,
-                };
-
-                let transaction = prepare_transaction(&postings, tx);
-
-                directives.push(Directive::Transaction(transaction));
-            }
-        }
-    }
-
-    Ok(directives)
 }
 
 fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result<Posting, Error> {

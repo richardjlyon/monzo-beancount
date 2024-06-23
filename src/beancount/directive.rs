@@ -10,6 +10,7 @@ type Comment = String;
 /// Represents a Beancount directive
 #[derive(Debug)]
 pub enum Directive {
+    Option(String, String),
     Comment(String),
     Open(NaiveDate, Account, Option<Comment>),
     Close(NaiveDate, Account, Option<Comment>),
@@ -22,6 +23,8 @@ impl Directive {
     pub fn to_formatted_string(&self) -> String {
         let account_width = 50;
         match self {
+            Directive::Option(key, value) => format!("option \"{}\" \"{}\"\n", key, value),
+
             Directive::Comment(comment) => format!("\n* {}\n\n", comment.to_case(Case::Title)),
 
             Directive::Open(date, account, comment) => {

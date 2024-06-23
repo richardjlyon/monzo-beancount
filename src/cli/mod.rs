@@ -13,8 +13,8 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
-    /// Update transactions
-    Update {},
+    /// Generate beancount files
+    Generate {},
     /// List sheet names
     Sheets {},
 }

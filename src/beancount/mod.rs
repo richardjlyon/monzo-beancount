@@ -41,11 +41,6 @@ struct BeanSettings {
 /// A struct representing the paths to the Beancount files.
 pub(crate) struct FilePaths {
     pub root_dir: PathBuf,
-    pub asset_file: PathBuf,
-    pub liability_file: PathBuf,
-    pub income_file: PathBuf,
-    pub expenses_file: PathBuf,
-    pub manual_file: PathBuf,
 }
 
 impl Beancount {
@@ -100,20 +95,7 @@ impl Beancount {
             std::fs::File::create(&main_file_path)?;
         }
 
-        // create include files
-        let asset_file = "assets.beancount";
-        let liability_file = "liabilities.beancount";
-        let income_file = "income.beancount";
-        let expenses_file = "expenses.beancount";
-        let manual_file = "manual.beancount";
-
-        let include_file_names: Vec<&str> = vec![
-            asset_file,
-            liability_file,
-            income_file,
-            expenses_file,
-            manual_file,
-        ];
+        let include_file_names: Vec<&str> = vec![];
 
         for file_name in &include_file_names {
             let file_path = root_dir.join(INCLUDE_DIR).join(file_name);
@@ -122,25 +104,8 @@ impl Beancount {
             }
         }
 
-        // write the main file includes
-        let mut main_file_str = r#"option "title" "My Beancount Ledger"
-option "operating_currency" "GBP"
-
-"#
-        .to_string();
-        for include_file in &include_file_names {
-            main_file_str += &format!("include \"{}/{}\"\n", INCLUDE_DIR, &include_file);
-        }
-
-        std::fs::write(&main_file_path, main_file_str)?;
-
         Ok(FilePaths {
             root_dir: root_dir.clone(),
-            asset_file: root_dir.join(INCLUDE_DIR).join(asset_file),
-            liability_file: root_dir.join(INCLUDE_DIR).join(liability_file),
-            income_file: root_dir.join(INCLUDE_DIR).join(income_file),
-            expenses_file: root_dir.join(INCLUDE_DIR).join(expenses_file),
-            manual_file: root_dir.join(INCLUDE_DIR).join(manual_file),
         })
     }
 }
