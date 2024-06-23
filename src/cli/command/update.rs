@@ -208,14 +208,30 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
 
     match tx.category.as_str() {
         "Transfers" => {
+            // pot tranfer
             if tx.payment_type == "Pot transfer" {
                 account.account_type = AccountType::Assets;
                 account.sub_account = Some(tx.name.clone());
+
+            // equity opening balance
+            } else if tx
+                .description
+                .clone()
+                .unwrap_or_default()
+                .starts_with("Monzo-")
+            {
+                account.account_type = AccountType::Assets;
+                account.sub_account = None;
+                amount = tx.amount as f64;
+
+            // named asset
             } else if let Some(matching_asset) = matching_asset(&tx.name) {
                 account.account_type = AccountType::Assets;
                 account.institution = matching_asset.institution;
                 account.account = tx.name.clone();
                 account.sub_account = None;
+
+            // other asset
             } else {
                 account.account_type = AccountType::Assets;
                 account.sub_account = None;
@@ -254,14 +270,17 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
 
     match tx.category.as_str() {
         "Transfers" => {
+            // pot transfer
             if tx.payment_type == "Pot transfer" {
                 account.account_type = AccountType::Assets;
                 account.sub_account = None;
+
+            // equity opening balance
             } else if let Some(description) = &tx.description {
                 if description.starts_with("Monzo-") {
                     account.account_type = AccountType::Equity;
                     account.sub_account = Some("OpeningBalances".to_string());
-                    amount = tx.amount as f64;
+                    amount = -tx.amount as f64;
                 }
             } else {
                 account.account_type = AccountType::Expenses;
