@@ -8,9 +8,12 @@ use config::Case;
 use convert_case::Casing;
 use rusty_money::{iso, Money};
 
-use crate::beancount::directive::Directive;
-use crate::beancount::transaction::{Posting, Postings, Transaction as BeancountTransaction};
-use crate::beancount::{Account as BeancountAccount, AccountType, Beancount};
+use crate::beancount::{
+    account::{Account as BeancountAccount, AccountType},
+    directive::Directive,
+    transaction::{Posting, Postings, Transaction as BeancountTransaction},
+    Beancount,
+};
 use crate::error::AppError as Error;
 use crate::google;
 use crate::google::config::{load_sheets, GoogleAccount};

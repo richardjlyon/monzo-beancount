@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 
-use super::{Account, AccountType};
+use super::account::{Account, AccountType};
 
 /// Represents a Beancount transaction
 #[derive(Debug)]

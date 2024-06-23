@@ -3,7 +3,7 @@
 use chrono::NaiveDate;
 use convert_case::{Case, Casing};
 
-use super::{Account, Transaction as BeanTransaction};
+use super::{account::Account, transaction::Transaction as BeanTransaction};
 
 type Comment = String;
 
@@ -67,7 +67,7 @@ impl Directive {
 
 #[cfg(test)]
 mod tests {
-    use crate::beancount::AccountType;
+    use crate::beancount::account::AccountType;
 
     use super::*;
 
