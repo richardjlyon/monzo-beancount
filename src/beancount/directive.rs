@@ -3,7 +3,7 @@
 use chrono::NaiveDate;
 use convert_case::{Case, Casing};
 
-use super::{equity::Equity, expense::Expense, Account, Transaction as BeanTransaction};
+use super::{Account, Transaction as BeanTransaction};
 
 type Comment = String;
 
@@ -11,9 +11,7 @@ type Comment = String;
 #[derive(Debug)]
 pub enum Directive {
     Comment(String),
-    OpenAccount(NaiveDate, Account, Option<Comment>),
-    OpenExpense(NaiveDate, Expense, Option<Comment>),
-    OpenEquity(NaiveDate, Equity, Option<Comment>),
+    Open(NaiveDate, Account, Option<Comment>),
     Close(NaiveDate, Account, Option<Comment>),
     Transaction(BeanTransaction),
     Balance(NaiveDate, Account),
@@ -25,44 +23,26 @@ impl Directive {
         let account_width = 50;
         match self {
             Directive::Comment(comment) => format!("\n* {}\n\n", comment.to_case(Case::Title)),
-            Directive::OpenAccount(date, account, comment) => {
+
+            Directive::Open(date, account, comment) => {
                 let currency = &account.country;
                 let comment = match comment {
                     Some(c) => format!("; {c}.\n"),
                     None => String::new(),
                 };
-                format!(
+                return format!(
                     "{}{} open {:account_width$} {}\n",
                     comment,
                     date,
                     account.to_string(),
                     currency
-                )
+                );
             }
-            Directive::OpenExpense(date, expense, comment) => {
-                let comment = match comment {
-                    Some(c) => format!("; {c}.\n"),
-                    None => String::new(),
-                };
-                format!(
-                    "{}{} open {:account_width$}\n",
-                    comment,
-                    date,
-                    expense.to_string(),
-                )
+
+            Directive::Transaction(transaction) => {
+                format!("{}\n", transaction.to_formatted_string())
             }
-            Directive::OpenEquity(date, equity, comment) => {
-                let comment = match comment {
-                    Some(c) => format!("; {c}.\n"),
-                    None => String::new(),
-                };
-                format!(
-                    "{}{} open {:account_width$}\n",
-                    comment,
-                    date,
-                    equity.to_string(),
-                )
-            }
+
             Directive::Close(date, account, comment) => {
                 let comment = match comment {
                     Some(c) => format!("; {c}.\n"),
@@ -75,9 +55,7 @@ impl Directive {
                     account.to_string(),
                 )
             }
-            Directive::Transaction(transaction) => {
-                format!("{}\n", transaction.to_formatted_string())
-            }
+
             Directive::Balance(_date, _account) => {
                 todo!()
             }
@@ -105,7 +83,7 @@ mod tests {
             sub_account: None,
         };
         // Act
-        let directive = Directive::OpenAccount(date, account, None);
+        let directive = Directive::Open(date, account, None);
         // Assert
         assert_eq!(
             directive.to_formatted_string(),
@@ -126,7 +104,7 @@ mod tests {
         };
         let comment = Some("Initial Deposit".to_string());
         // Act
-        let directive = Directive::OpenAccount(date, account, comment);
+        let directive = Directive::Open(date, account, comment);
         // Assert
         assert_eq!(
             directive.to_formatted_string(),

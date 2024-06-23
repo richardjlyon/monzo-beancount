@@ -5,7 +5,6 @@
 
 pub mod account;
 pub mod directive;
-pub mod equity;
 pub mod expense;
 pub mod transaction;
 
@@ -15,7 +14,6 @@ use std::{collections::HashMap, path::PathBuf};
 
 // use account::Account;
 use crate::error::AppError as Error;
-use equity::Equity;
 use expense::Expense;
 
 pub use account::{Account, AccountType};
@@ -37,7 +35,6 @@ pub struct BeanSettings {
     pub liabilities: Option<Vec<Account>>,
     pub income: Option<Vec<Account>>,
     pub expenses: Option<Vec<Expense>>,
-    pub equity: Option<Vec<Equity>>,
 }
 
 impl Beancount {

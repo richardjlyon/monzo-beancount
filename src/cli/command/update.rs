@@ -31,7 +31,7 @@ pub async fn update() -> Result<(), Error> {
     // -- Open Equity Accounts -----------------------------------------------------
 
     directives.push(Directive::Comment("equity accounts".to_string()));
-    directives.extend(open_config_equity_accounts()?);
+    directives.extend(open_equity_account()?);
 
     // -- Open Asset Accounts --------------------------------------------------------------
 
@@ -76,15 +76,23 @@ pub async fn update() -> Result<(), Error> {
     Ok(())
 }
 
-fn open_config_equity_accounts() -> Result<Vec<Directive>, Error> {
+fn open_equity_account() -> Result<Vec<Directive>, Error> {
     let bc = Beancount::from_config()?;
     let mut directives: Vec<Directive> = Vec::new();
 
-    if let Some(equity_accounts) = bc.settings.equity {
-        for equity in equity_accounts {
-            directives.push(Directive::OpenEquity(bc.settings.start_date, equity, None));
-        }
-    }
+    let equity_account = BeancountAccount {
+        account_type: AccountType::Equity,
+        country: "GBP".to_string(),
+        institution: String::new(),
+        account: "Opening Balances".to_string(),
+        sub_account: None,
+    };
+
+    directives.push(Directive::Open(
+        bc.settings.start_date,
+        equity_account.clone(),
+        None,
+    ));
 
     Ok(directives)
 }
@@ -97,7 +105,7 @@ fn open_config_assets() -> Result<Vec<Directive>, Error> {
     match bc.settings.assets {
         Some(asset_accounts) => {
             for asset_account in asset_accounts {
-                directives.push(Directive::OpenAccount(open_date, asset_account, None));
+                directives.push(Directive::Open(open_date, asset_account, None));
             }
         }
         None => (),
@@ -114,7 +122,7 @@ fn open_config_income() -> Result<Vec<Directive>, Error> {
     match bc.settings.income {
         Some(income_account) => {
             for income_account in income_account {
-                directives.push(Directive::OpenAccount(open_date, income_account, None));
+                directives.push(Directive::Open(open_date, income_account, None));
             }
         }
         None => (),
@@ -135,7 +143,7 @@ async fn open_config_liabilities() -> Result<Vec<Directive>, Error> {
 
     // open configured liabilities
     for account in bc.settings.liabilities.unwrap() {
-        directives.push(Directive::OpenAccount(open_date, account, None));
+        directives.push(Directive::Open(open_date, account, None));
     }
 
     Ok(directives)
@@ -160,7 +168,7 @@ async fn open_expenses() -> Result<Vec<Directive>, Error> {
                 account: account.name.clone(),
                 sub_account: Some(expense_account),
             };
-            directives.push(Directive::OpenAccount(open_date, beanaccount, None));
+            directives.push(Directive::Open(open_date, beanaccount, None));
         }
     }
 
@@ -279,7 +287,7 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
             } else if let Some(description) = &tx.description {
                 if description.starts_with("Monzo-") {
                     account.account_type = AccountType::Equity;
-                    account.sub_account = Some("OpeningBalances".to_string());
+                    account.account = "OpeningBalances".to_string();
                     amount = -tx.amount as f64;
                 }
             } else {

@@ -1,4 +1,4 @@
-//! Represents a Beancount account
+//! Represents a Beancount account type and handles formatting of account names.
 //!
 
 use core::fmt;
@@ -18,11 +18,6 @@ pub enum AccountType {
 
 /// Represents a Beancount account
 ///
-/// [Assets][Currency][AccountName][AssetName] e.g. Assets:GBP:Personal:Savings
-/// [Liabilities][Currency][AccountNAme][LiabilityName] e.g. Liabilities:GBP:CreditCard:Amex
-/// [Equities][Currency][AccountName][EquityName] e.g. Equities:GBP:OpeningBalances
-/// [Income][Currency][AccountName][IncomeName] e.g. Income:GBP:Salary:BP
-/// [Expenses][Currency][AccountName][ExpenseName] e.g. Expenses:GBP:Personal:Groceries
 #[derive(Debug, Deserialize, Clone, Eq, PartialEq, Hash)]
 pub struct Account {
     pub(crate) account_type: AccountType,
@@ -44,7 +39,7 @@ impl fmt::Display for Account {
                     f,
                     "{}{}",
                     format!("{}", self.account_type),
-                    format!("{}", label),
+                    format!(":{}", self.account.to_case(Case::Pascal)),
                 )
             }
             _ => {
