@@ -17,7 +17,7 @@ use super::{prepare_transaction, write_directives, Record};
 /// Read a CSV file of Monzo savings pot transactions and create a Beancount file
 /// from the interest payments
 pub(crate) fn process_savings() -> Result<(), Error> {
-    let csv_file_path = "/Users/richardlyon/SynologyDrive/[01] Areas/[04] Money/[02] banks/Monzo/transactions/monzo-savings-processed.csv";
+    let csv_file_path = "/Users/richardlyon/SynologyDrive/[01] Areas/[04] Money/[02] banks/Monzo/transactions/savings.csv";
     let mut reader = Reader::from_path(csv_file_path).expect("Failed to open CSV file");
 
     let bean = Beancount::from_config().unwrap();
@@ -27,17 +27,12 @@ pub(crate) fn process_savings() -> Result<(), Error> {
     let mut directives: Vec<Directive> = vec![];
 
     // Collect records where the description is "Interest"
-    let records: Vec<Record> = reader
+    let mut records: Vec<Record> = reader
         .deserialize()
-        .filter_map(|result| {
-            let record: Record = result.ok()?;
-            if record.description == "Interest" {
-                Some(record)
-            } else {
-                None
-            }
-        })
+        .filter_map(|result| result.ok())
         .collect();
+
+    records.sort_by_key(|record| record.date);
 
     // Create the directives
     directives.push(Directive::Comment("Savings Interest".to_string()));
@@ -84,11 +79,11 @@ fn prepare_to_posting(record: &Record) -> Result<Posting, Error> {
 
 fn prepare_from_posting(record: &Record) -> Result<Posting, Error> {
     let account = Account {
-        account_type: AccountType::Income,
+        account_type: AccountType::Assets,
         country: "GBP".to_string(),
         institution: "Monzo".to_string(),
         account: "Personal".to_string(),
-        sub_account: Some("Savings".to_string()),
+        sub_account: None,
         transaction_id: None,
     };
     let amount = -record.amount * 100.0;

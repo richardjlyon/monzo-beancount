@@ -30,6 +30,12 @@ async fn post_google_transactions() -> Result<Vec<Directive>, Error> {
 
         if let Some(transactions) = sheet.transactions() {
             for tx in transactions {
+                // NOTE: This is a hack to ignore pot transfers and assumes
+                // that pot transfers are processed separately.
+                if tx.payment_type == "Pot transfer" {
+                    continue;
+                }
+
                 let to_posting = prepare_to_posting(&account, tx)?;
                 let from_posting = prepare_from_posting(&account, tx)?;
 

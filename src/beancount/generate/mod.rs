@@ -50,12 +50,12 @@ impl Beancount {
 
 fn option_directives() -> Vec<Directive> {
     vec![
-        Directive::Option(
-            "title".to_string(),
-            "My Excellent Beancount File".to_string(),
-        ),
+        Directive::Option("title".to_string(), "Monzo Accounts".to_string()),
         Directive::Option("operating_currency".to_string(), "GBP".to_string()),
         Directive::Include("include/savings.beancount".to_string()),
+        Directive::Include("include/essential-fixed.beancount".to_string()),
+        Directive::Include("include/essential-variable.beancount".to_string()),
+        Directive::Include("include/discretionary.beancount".to_string()),
     ]
 }
 

@@ -17,4 +17,7 @@ pub enum AppError {
 
     #[error("Failed to parse split category: {0}")]
     CategoryParseError(String),
+
+    #[error("Command aborted")]
+    AbortError,
 }

@@ -95,22 +95,6 @@ impl Beancount {
             std::fs::File::create(&main_file_path)?;
         }
 
-        let include_file_names: Vec<&str> = vec![
-            "savings",
-            "essential_fixed",
-            "essential_variable",
-            "discretionary",
-        ];
-
-        for file_name in &include_file_names {
-            let file_path = root_dir
-                .join(INCLUDE_DIR)
-                .join(format!("{}.beancount", file_name));
-            if !file_path.exists() {
-                std::fs::File::create(file_path)?;
-            }
-        }
-
         Ok(FilePaths {
             root_dir: root_dir.clone(),
             include_dir: root_dir.join(INCLUDE_DIR),

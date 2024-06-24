@@ -18,5 +18,9 @@ pub enum Commands {
     /// List sheet names
     Sheets {},
     /// Process CSV files
-    Process {},
+    Process {
+        /// Optional flag to regenerate files
+        #[clap(long, short, action)]
+        regenerate: bool,
+    },
 }

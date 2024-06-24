@@ -22,7 +22,7 @@ async fn main() -> Result<(), AppError> {
             Err(e) => eprintln!("Error: {}", e),
         },
 
-        Commands::Process {} => match command::process().await {
+        Commands::Process { regenerate } => match command::process(*regenerate).await {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),
         },
