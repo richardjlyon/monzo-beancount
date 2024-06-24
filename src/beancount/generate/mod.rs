@@ -2,9 +2,7 @@
 //!
 
 pub(crate) mod classifier;
-pub(crate) mod csv_directives;
 pub(crate) mod google_sheet_directives;
-pub(crate) mod manual_directives;
 pub(crate) mod open_directives;
 
 use std::{fs::File, io::Write};
@@ -24,9 +22,7 @@ use super::{
     Beancount,
 };
 
-use csv_directives::csv_directives;
 use google_sheet_directives::google_sheet_directives;
-use manual_directives::manual_directives;
 use open_directives::open_directives;
 
 impl Beancount {
@@ -36,9 +32,7 @@ impl Beancount {
 
         let open_directives = open_directives().await?;
 
-        let mut transaction_directives = google_sheet_directives().await?;
-        transaction_directives.extend(csv_directives()?);
-        transaction_directives.extend(manual_directives()?);
+        let transaction_directives = google_sheet_directives().await?;
 
         // TODO: sort transaction_directives by date
 
@@ -61,6 +55,7 @@ fn option_directives() -> Vec<Directive> {
             "My Excellent Beancount File".to_string(),
         ),
         Directive::Option("operating_currency".to_string(), "GBP".to_string()),
+        Directive::Include("include/savings.beancount".to_string()),
     ]
 }
 
@@ -229,22 +224,4 @@ fn prepare_amount(tx: &GoogleTransaction) -> String {
             format!("{} {}", tx.local_amount, tx.local_currency)
         }
     }
-}
-
-fn from_account_general_income(
-    account: &GoogleAccount,
-    tx: &GoogleTransaction,
-) -> (BeancountAccount, f64) {
-    let account = BeancountAccount {
-        account_type: AccountType::Income,
-        country: account.country.clone(),
-        institution: account.institution.clone(),
-        account: account.name.clone().to_case(Case::Pascal),
-        sub_account: None,
-        transaction_id: None,
-    };
-
-    let amount = -tx.amount as f64;
-
-    (account, amount)
 }

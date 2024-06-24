@@ -17,4 +17,6 @@ pub enum Commands {
     Generate {},
     /// List sheet names
     Sheets {},
+    /// Process CSV files
+    Process {},
 }
