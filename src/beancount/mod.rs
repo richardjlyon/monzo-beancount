@@ -21,7 +21,6 @@ use crate::error::AppError as Error;
 pub struct Beancount {
     pub start_date: NaiveDate,
     pub file_paths: FilePaths,
-    pub manual_accounts: Option<Vec<String>>,
     pub assets: Option<Vec<Account>>,
     pub liabilities: Option<Vec<Account>>,
     pub income: Option<Vec<Account>>,
@@ -42,7 +41,6 @@ pub(crate) struct FilePaths {
 struct BeanSettings {
     pub root_dir: PathBuf,
     pub start_date: NaiveDate,
-    pub manual_accounts: Option<Vec<String>>,
     pub assets: Option<Vec<Account>>,
     pub liabilities: Option<Vec<Account>>,
     pub income: Option<Vec<Account>>,
@@ -77,7 +75,6 @@ impl Beancount {
             file_paths,
             start_date: settings.start_date,
             assets: settings.assets,
-            manual_accounts: settings.manual_accounts,
             liabilities: settings.liabilities,
             income: settings.income,
             expenses: settings.expenses,
