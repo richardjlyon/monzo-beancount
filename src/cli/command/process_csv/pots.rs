@@ -1,5 +1,6 @@
-use std::fs::File;
+use std::{collections::HashSet, fs::File};
 
+use chrono::NaiveDate;
 use config::Case;
 use convert_case::Casing;
 use csv::Reader;
@@ -19,18 +20,65 @@ use super::{prepare_transaction, write_directives, Record};
 /// Read a CSV file of Monzo savings pot transactions and create a Beancount file
 /// from the interest payments
 pub(crate) fn process_pot(pot_name: &str) -> Result<(), Error> {
-    let records = get_sorted_records(pot_name)?;
     let mut beancount_file = get_beancount_file_path(pot_name);
+    let records = get_sorted_records(pot_name)?;
+    let sorted_categories = get_sorted_categories(&records);
     let pot_name = format!("{}Pot", pot_name.to_case(Case::Pascal));
-
     let mut directives: Vec<Directive> = vec![];
+
+    let first_record = records.first().unwrap();
+    let open_date = first_record.date;
+
     directives.push(Directive::Comment(pot_name.to_string()));
+
+    directives.push(Directive::Comment("Expense Accounts".to_string()));
+    directives.extend(open_directives(&sorted_categories, open_date));
+
+    directives.push(Directive::Comment("Transactions".to_string()));
     directives.extend(generate_directives(records.clone(), &pot_name)?);
+
     directives.push(close_account(&records, &pot_name));
 
     write_directives(&mut beancount_file, directives)?;
 
     Ok(())
+}
+
+fn open_directives(categories: &Vec<String>, open_date: NaiveDate) -> Vec<Directive> {
+    let mut directives: Vec<Directive> = vec![];
+
+    for category in categories {
+        let account = Account {
+            account_type: AccountType::Expenses,
+            country: "GBP".to_string(),
+            institution: "Monzo".to_string(),
+            account: category.to_string(),
+            sub_account: None,
+            transaction_id: None,
+        };
+
+        directives.push(Directive::Open(open_date, account, None));
+    }
+
+    directives
+}
+
+fn get_sorted_categories(records: &Vec<Record>) -> Vec<String> {
+    let categories: HashSet<String> = records
+        .clone()
+        .into_iter()
+        .filter_map(|record| record.category) // Filter out None and extract Some values
+        .collect();
+
+    let mut sorted_categories: Vec<String> = categories
+        .clone()
+        .into_iter()
+        .map(|category| category.to_case(Case::Pascal))
+        .collect();
+
+    sorted_categories.sort();
+
+    sorted_categories
 }
 
 // deserialise the records from the CSV file
@@ -65,7 +113,7 @@ fn generate_directives(records: Vec<Record>, pot_name: &str) -> Result<Vec<Direc
 
     for record in &records {
         let to_posting = prepare_to_posting(&record, pot_name)?;
-        let from_posting = prepare_from_posting(&record)?;
+        let from_posting = prepare_from_posting(&record, pot_name)?;
 
         let postings = Postings {
             to: to_posting,
@@ -80,6 +128,86 @@ fn generate_directives(records: Vec<Record>, pot_name: &str) -> Result<Vec<Direc
     Ok(directives)
 }
 
+fn prepare_to_posting(record: &Record, pot_name: &str) -> Result<Posting, Error> {
+    let account = if is_transfer(&record.description) {
+        Account {
+            account_type: AccountType::Assets,
+            country: "GBP".to_string(),
+            institution: "Monzo".to_string(),
+            account: pot_name.to_string(),
+            sub_account: None,
+            transaction_id: None,
+        }
+    } else {
+        Account {
+            account_type: AccountType::Expenses,
+            country: "GBP".to_string(),
+            institution: "Monzo".to_string(),
+            account: "Personal".to_string(),
+            sub_account: record.category.clone(),
+            transaction_id: None,
+        }
+    };
+
+    let amount = if is_transfer(&record.description) {
+        record.amount * 100.0
+    } else {
+        -record.amount * 100.0
+    };
+
+    let currency = "GBP".to_string();
+    let description = Some(record.description.clone());
+
+    Ok(Posting {
+        account,
+        amount,
+        currency,
+        description,
+    })
+}
+
+fn prepare_from_posting(record: &Record, pot_name: &str) -> Result<Posting, Error> {
+    let account = if is_transfer(&record.description) {
+        Account {
+            account_type: AccountType::Assets,
+            country: "GBP".to_string(),
+            institution: "Monzo".to_string(),
+            account: "Personal".to_string(),
+            sub_account: None,
+            transaction_id: None,
+        }
+    } else {
+        Account {
+            account_type: AccountType::Assets,
+            country: "GBP".to_string(),
+            institution: "Monzo".to_string(),
+            account: pot_name.to_string(),
+            sub_account: None,
+            transaction_id: None,
+        }
+    };
+
+    let amount = if is_transfer(&record.description) {
+        record.amount * -100.0
+    } else {
+        record.amount * 100.0
+    };
+
+    let currency = "GBP".to_string();
+    let description = Some(record.description.clone());
+
+    Ok(Posting {
+        account,
+        amount,
+        currency,
+        description,
+    })
+}
+
+fn is_transfer(description: &str) -> bool {
+    description.starts_with("Withdrawal") || description.starts_with("Deposit")
+}
+
 fn close_account(records: &Vec<Record>, pot_name: &str) -> Directive {
     let last_record = records.last().unwrap();
 
@@ -88,8 +216,8 @@ fn close_account(records: &Vec<Record>, pot_name: &str) -> Directive {
         account_type: AccountType::Assets,
         country: "GBP".to_string(),
         institution: "Monzo".to_string(),
-        account: "Personal".to_string(),
-        sub_account: Some(pot_name.to_string()),
+        account: pot_name.to_string(),
+        sub_account: None,
         transaction_id: None,
     };
 
@@ -101,50 +229,4 @@ fn close_account(records: &Vec<Record>, pot_name: &str) -> Directive {
             pot_name.to_case(Case::Title).to_string()
         )),
     )
-}
-
-fn prepare_to_posting(record: &Record, pot_name: &str) -> Result<Posting, Error> {
-    let account = Account {
-        account_type: AccountType::Assets,
-        country: "GBP".to_string(),
-        institution: "Monzo".to_string(),
-        account: "Personal".to_string(),
-        sub_account: Some(pot_name.to_string()),
-        transaction_id: None,
-    };
-
-    let amount = record.amount * 100.0;
-
-    let currency = "GBP".to_string();
-    let description = Some(record.description.clone());
-
-    Ok(Posting {
-        account,
-        amount,
-        currency,
-        description,
-    })
-}
-
-fn prepare_from_posting(record: &Record) -> Result<Posting, Error> {
-    let account = Account {
-        account_type: AccountType::Assets,
-        country: "GBP".to_string(),
-        institution: "Monzo".to_string(),
-        account: "Personal".to_string(),
-        sub_account: None,
-        transaction_id: None,
-    };
-
-    let amount = -record.amount * 100.0;
-
-    let currency = "GBP".to_string();
-    let description = Some(record.description.clone());
-
-    Ok(Posting {
-        account,
-        amount,
-        currency,
-        description,
-    })
 }

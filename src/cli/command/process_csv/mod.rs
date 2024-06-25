@@ -11,7 +11,6 @@
 //!
 
 mod pots;
-mod savings;
 
 use std::fs::File;
 use std::io::Write;
@@ -26,7 +25,6 @@ use crate::beancount::transaction::{Postings, Transaction as BeancountTransactio
 use crate::error::AppError as Error;
 
 use pots::process_pot;
-use savings::process_savings;
 
 pub async fn process(do_regenerate: bool) -> Result<(), Error> {
     println!("Processing CSV");
@@ -35,8 +33,7 @@ pub async fn process(do_regenerate: bool) -> Result<(), Error> {
         if !confirm_reset()? {
             return Err(Error::AbortError);
         }
-
-        process_savings()?;
+        process_pot("savings")?;
     }
 
     let pots = vec!["essential-fixed", "essential-variable", "discretionary"];

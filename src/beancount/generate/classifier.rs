@@ -18,7 +18,6 @@ pub(crate) enum Classification {
     // TransferExpense,
 }
 
-/// Clasify a transaction with a category of "Transfers".
 pub(crate) fn classify_transaction(
     tx: &GoogleTransaction,
 ) -> Result<Option<Classification>, Error> {
@@ -28,6 +27,10 @@ pub(crate) fn classify_transaction(
                 let income_account =
                     income_account_finder(&tx.name).expect("Failed to get institution name");
                 return Ok(Some(Classification::IncomeAccount(income_account)));
+            }
+
+            if is_custom_transfer(&tx) {
+                return Ok(Some(Classification::TransferOpeningBalance));
             }
 
             return Ok(Some(Classification::IncomeGeneral));
@@ -50,6 +53,14 @@ pub(crate) fn classify_transaction(
         }
         _ => Ok(None),
     }
+}
+
+///
+fn is_custom_transfer(tx: &GoogleTransaction) -> bool {
+    tx.notes
+        .as_ref()
+        .unwrap_or(&String::new())
+        .starts_with("Account Switch")
 }
 
 fn is_asset_account(account: &str) -> bool {

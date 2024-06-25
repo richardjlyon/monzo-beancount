@@ -36,12 +36,12 @@ async fn post_google_transactions() -> Result<Vec<Directive>, Error> {
                     continue;
                 }
 
-                let to_posting = prepare_to_posting(&account, tx)?;
                 let from_posting = prepare_from_posting(&account, tx)?;
+                let to_posting = prepare_to_posting(&account, tx)?;
 
                 let postings = Postings {
-                    to: to_posting,
                     from: from_posting,
+                    to: to_posting,
                 };
 
                 let transaction = prepare_transaction(&postings, tx);

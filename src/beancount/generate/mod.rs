@@ -86,10 +86,8 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
                 account.sub_account = None;
                 amount = tx.amount as f64;
             }
-            Classification::IncomeAccount(institution_account) => {
+            Classification::IncomeAccount(_institution_account) => {
                 account.account_type = AccountType::Assets;
-                account.institution = institution_account.institution;
-                account.account = tx.name.clone();
                 account.sub_account = None;
                 amount = tx.amount as f64;
             }
@@ -117,7 +115,7 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
         None => {}
     }
 
-    // if tx.id == "tx_0000AdVRzCp69ZxOqfBdXl".to_string() {
+    // if tx.id == "tx_0000Aew2N55dFgHod1VPco".to_string() {
     //     println!("TO:");
     //     println!("{:?}", classify_transaction(tx));
     //     println!("{:?}", tx);
@@ -172,7 +170,7 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
         None => {}
     }
 
-    // if tx.id == "tx_0000AdVRzCp69ZxOqfBdXl".to_string() {
+    // if tx.id == "tx_0000Aew2N55dFgHod1VPco".to_string() {
     //     println!("\nFROM:");
     //     println!("{:?}", classify_transaction(tx));
     //     println!("{:?}", tx);
