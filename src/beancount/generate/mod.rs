@@ -155,12 +155,12 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
         None => {}
     }
 
-    if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
-        println!("TO:");
-        println!("{:?}", classify_transaction(tx));
-        println!("{:?}", tx);
-        println!("{:#?}", account);
-    }
+    // if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
+    //     println!("TO:");
+    //     println!("{:?}", classify_transaction(tx));
+    //     println!("{:?}", tx);
+    //     println!("{:#?}", account);
+    // }
 
     Ok(Posting {
         account,
@@ -210,12 +210,12 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
         None => {}
     }
 
-    if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
-        println!("\nFROM:");
-        println!("{:?}", classify_transaction(tx));
-        println!("{:?}", tx);
-        println!("{:#?}", account);
-    }
+    // if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
+    //     println!("\nFROM:");
+    //     println!("{:?}", classify_transaction(tx));
+    //     println!("{:?}", tx);
+    //     println!("{:#?}", account);
+    // }
 
     Ok(Posting {
         account,
@@ -246,10 +246,12 @@ fn prepare_transaction_comment(tx: &GoogleTransaction) -> Option<String> {
 }
 
 fn prepare_transaction_notes(tx: &GoogleTransaction) -> String {
-    // FIXME remove id after debugging
-    let merchant_name = tx.name.clone();
+    let mut merchant_name = tx.name.clone();
 
-    format!("{} - {}", merchant_name, tx.id)
+    // FIXME remove id after debugging
+    // merchant_name = format!("{} - {}", merchant_name, tx.id);
+
+    merchant_name
 }
 
 fn prepare_amount(tx: &GoogleTransaction) -> String {
