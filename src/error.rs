@@ -20,4 +20,7 @@ pub enum AppError {
 
     #[error("Command aborted")]
     AbortError,
+
+    #[error("Invalid file name: {0}")]
+    InvalidFileName(String),
 }

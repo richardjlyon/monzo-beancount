@@ -17,10 +17,6 @@ pub enum Commands {
     Generate {},
     /// List sheet names
     Sheets {},
-    /// Process CSV files
-    Process {
-        /// Optional flag to regenerate files
-        #[clap(long, short, action)]
-        regenerate: bool,
-    },
+    /// Import CSV files
+    Import {},
 }

@@ -17,6 +17,7 @@ use serde::Deserialize;
 use crate::error::AppError as Error;
 
 /// A struct representing a Beancount file
+#[derive(Debug)]
 pub struct Beancount {
     pub start_date: NaiveDate,
     pub file_paths: FilePaths,
@@ -26,12 +27,12 @@ pub struct Beancount {
 }
 
 /// A struct representing the paths to the Beancount files.
+#[derive(Debug)]
 pub(crate) struct FilePaths {
     pub main_file: PathBuf,
     pub root_dir: PathBuf,
     pub include_dir: PathBuf,
     pub import_dir: PathBuf,
-    pub accounts_dir: PathBuf,
 }
 
 /// A struct representing a Beancount configuration file on disk.
@@ -84,9 +85,8 @@ impl Beancount {
         // create directories
         const INCLUDE_DIR: &str = "include";
         const IMPORT_DIR: &str = "import";
-        const ACCOUNTS_DIR: &str = "accounts";
 
-        let directory_names: Vec<&str> = vec![INCLUDE_DIR, IMPORT_DIR, ACCOUNTS_DIR];
+        let directory_names: Vec<&str> = vec![INCLUDE_DIR, IMPORT_DIR];
 
         for folder_name in directory_names {
             let directory_path = root_dir.join(folder_name);
@@ -106,7 +106,6 @@ impl Beancount {
             root_dir: root_dir.clone(),
             include_dir: root_dir.join(INCLUDE_DIR),
             import_dir: root_dir.join(IMPORT_DIR),
-            accounts_dir: root_dir.join(ACCOUNTS_DIR),
         };
 
         Ok(file_paths)
