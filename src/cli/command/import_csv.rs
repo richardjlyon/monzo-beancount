@@ -158,7 +158,7 @@ fn prepare_to_posting(record: &Record, pot_name: &str) -> Result<Posting, Error>
             account_type: AccountType::Assets,
             country: "GBP".to_string(),
             institution: "Monzo".to_string(),
-            account: "Personal".to_string(),
+            account: pot_name.to_string(),
             sub_account: None,
             transaction_id: None,
         }
@@ -182,7 +182,9 @@ fn prepare_to_posting(record: &Record, pot_name: &str) -> Result<Posting, Error>
         }
     };
 
-    let amount = if is_transfer(&record.description) {
+    let amount = if is_transfer(&record.description)
+        || is_income(&record.category.clone().unwrap_or("".to_string()))
+    {
         record.amount * 100.0
     } else {
         -record.amount * 100.0
@@ -206,8 +208,8 @@ fn prepare_from_posting(record: &Record, pot_name: &str) -> Result<Posting, Erro
             account_type: AccountType::Income,
             country: "GBP".to_string(),
             institution: "Monzo".to_string(),
-            account: "Personal".to_string(),
-            sub_account: Some("Savings".to_string()),
+            account: pot_name.to_string(),
+            sub_account: None,
             transaction_id: None,
         }
     } else if is_transfer(&record.description) {
@@ -230,7 +232,9 @@ fn prepare_from_posting(record: &Record, pot_name: &str) -> Result<Posting, Erro
         }
     };
 
-    let amount = if is_transfer(&record.description) {
+    let amount = if is_transfer(&record.description)
+        || is_income(&record.category.clone().unwrap_or("".to_string()))
+    {
         record.amount * -100.0
     } else {
         record.amount * 100.0
