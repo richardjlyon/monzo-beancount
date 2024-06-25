@@ -37,8 +37,7 @@ impl Beancount {
         // TODO: sort transaction_directives by date
 
         // write beancount files to disk
-        let file_path = self.file_paths.root_dir.join("main.beancount");
-        let mut file = File::create(file_path)?;
+        let mut file = File::create(self.file_paths.main_file.clone())?;
 
         write_directives(&mut file, option_directives)?;
         write_directives(&mut file, open_directives)?;

@@ -8,7 +8,7 @@ pub mod directive;
 pub mod generate;
 pub mod transaction;
 
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use account::Account;
 use chrono::NaiveDate;
@@ -18,20 +18,8 @@ use crate::error::AppError as Error;
 
 /// A struct representing a Beancount file
 pub struct Beancount {
+    pub start_date: NaiveDate,
     pub file_paths: FilePaths,
-    pub start_date: NaiveDate,
-    pub assets: Option<Vec<Account>>,
-    pub liabilities: Option<Vec<Account>>,
-    pub income: Option<Vec<Account>>,
-    pub custom_categories: Option<HashMap<String, String>>,
-}
-
-/// A struct representing a Beancount configuration file on disk.
-#[derive(Debug, Deserialize)]
-struct BeanSettings {
-    pub root_dir: PathBuf,
-    pub start_date: NaiveDate,
-    pub custom_categories: Option<HashMap<String, String>>,
     pub assets: Option<Vec<Account>>,
     pub liabilities: Option<Vec<Account>>,
     pub income: Option<Vec<Account>>,
@@ -39,10 +27,24 @@ struct BeanSettings {
 
 /// A struct representing the paths to the Beancount files.
 pub(crate) struct FilePaths {
+    pub main_file: PathBuf,
     pub root_dir: PathBuf,
     pub include_dir: PathBuf,
+    pub import_dir: PathBuf,
+    pub accounts_dir: PathBuf,
 }
 
+/// A struct representing a Beancount configuration file on disk.
+#[derive(Debug, Deserialize)]
+struct BeanSettings {
+    pub root_dir: PathBuf,
+    pub start_date: NaiveDate,
+    pub assets: Option<Vec<Account>>,
+    pub liabilities: Option<Vec<Account>>,
+    pub income: Option<Vec<Account>>,
+}
+
+/// Constructors
 impl Beancount {
     /// Create a new Beancount instance
     ///
@@ -72,15 +74,19 @@ impl Beancount {
             assets: settings.assets,
             liabilities: settings.liabilities,
             income: settings.income,
-            custom_categories: settings.custom_categories,
         })
     }
+}
 
+/// File handling functions
+impl Beancount {
     pub(crate) fn initialise_filesystem(root_dir: PathBuf) -> Result<FilePaths, Error> {
         // create directories
         const INCLUDE_DIR: &str = "include";
+        const IMPORT_DIR: &str = "import";
+        const ACCOUNTS_DIR: &str = "accounts";
 
-        let directory_names: Vec<&str> = vec![INCLUDE_DIR];
+        let directory_names: Vec<&str> = vec![INCLUDE_DIR, IMPORT_DIR, ACCOUNTS_DIR];
 
         for folder_name in directory_names {
             let directory_path = root_dir.join(folder_name);
@@ -89,16 +95,21 @@ impl Beancount {
             }
         }
 
-        // create main file
+        // create `main.beancount` if it doesn't exist
         let main_file_path = root_dir.join("main.beancount");
         if !main_file_path.exists() {
             std::fs::File::create(&main_file_path)?;
         }
 
-        Ok(FilePaths {
+        let file_paths = FilePaths {
+            main_file: main_file_path,
             root_dir: root_dir.clone(),
             include_dir: root_dir.join(INCLUDE_DIR),
-        })
+            import_dir: root_dir.join(IMPORT_DIR),
+            accounts_dir: root_dir.join(ACCOUNTS_DIR),
+        };
+
+        Ok(file_paths)
     }
 }
 
@@ -109,8 +120,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_from_config() {
+    fn should_construct_from_config() {
         let beancount = Beancount::from_config();
         assert!(beancount.is_ok());
+    }
+
+    #[test]
+    fn should_initialise_filesystem() {
+        let test_dir = temp_dir::TempDir::with_prefix("monzo-test").unwrap();
+        let file_paths = Beancount::initialise_filesystem(test_dir.path().to_path_buf());
+        assert!(file_paths.is_ok());
     }
 }

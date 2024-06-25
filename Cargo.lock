@@ -195,6 +195,7 @@ dependencies = [
  "serde_yaml",
  "strum",
  "strum_macros",
+ "temp-dir",
  "thiserror",
  "tokio",
 ]
@@ -2001,6 +2002,12 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
+
+[[package]]
+name = "temp-dir"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f227968ec00f0e5322f9b8173c7a0cbcff6181a0a5b28e9892491c286277231"
 
 [[package]]
 name = "tempfile"
