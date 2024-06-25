@@ -56,6 +56,7 @@ pub async fn import() -> Result<(), Error> {
     Ok(())
 }
 
+// get the .CSV files in `dir`
 fn get_csv_files(dir: &PathBuf) -> Result<Vec<PathBuf>, Error> {
     let mut csv_files = Vec::new();
 
@@ -111,7 +112,7 @@ fn beanacount_file(csv_file: &PathBuf, file_paths: &FilePaths) -> Result<File, E
         .ok_or_else(|| Error::InvalidFileName(csv_file.display().to_string()))?;
 
     // Change the file name extension
-    let beancount_file_name = csv_file_name.replace(".csv", ".beanfile");
+    let beancount_file_name = csv_file_name.replace(".csv", ".beancount");
     let beancount_file_path = file_paths.include_dir.join(beancount_file_name);
     let beancount_file = File::create(&beancount_file_path)?;
 

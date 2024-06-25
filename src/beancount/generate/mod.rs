@@ -5,6 +5,8 @@ pub(crate) mod classifier;
 pub(crate) mod google_sheet_directives;
 pub(crate) mod open_directives;
 
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::{fs::File, io::Write};
 
 use classifier::{classify_transaction, Classification};
@@ -15,6 +17,7 @@ use rusty_money::{iso, Money};
 use crate::google::transactions::Transaction as GoogleTransaction;
 use crate::{error::AppError as Error, google::config::GoogleAccount};
 
+use super::FilePaths;
 use super::{
     account::{Account as BeancountAccount, AccountType},
     directive::Directive,
@@ -28,18 +31,15 @@ use open_directives::open_directives;
 impl Beancount {
     /// Process the input and produce a set of Beancount accounts
     pub async fn generate(&self) -> Result<(), Error> {
-        let option_directives = option_directives();
-
-        let open_directives = open_directives().await?;
-
-        let transaction_directives = google_sheet_directives().await?;
-
-        // TODO: sort transaction_directives by date
-
-        // write beancount files to disk
         let mut file = File::create(self.file_paths.main_file.clone())?;
 
+        let option_directives = option_directives();
+        let include_directives = include_directives(&self.file_paths)?;
+        let open_directives = open_directives().await?;
+        let transaction_directives = google_sheet_directives().await?;
+
         write_directives(&mut file, option_directives)?;
+        write_directives(&mut file, include_directives)?;
         write_directives(&mut file, open_directives)?;
         write_directives(&mut file, transaction_directives)?;
 
@@ -51,11 +51,52 @@ fn option_directives() -> Vec<Directive> {
     vec![
         Directive::Option("title".to_string(), "Monzo Accounts".to_string()),
         Directive::Option("operating_currency".to_string(), "GBP".to_string()),
-        Directive::Include("include/savings.beancount".to_string()),
-        Directive::Include("include/essential-fixed.beancount".to_string()),
-        Directive::Include("include/essential-variable.beancount".to_string()),
-        Directive::Include("include/discretionary.beancount".to_string()),
     ]
+}
+
+fn include_directives(file_paths: &FilePaths) -> Result<Vec<Directive>, Error> {
+    let mut directives: Vec<Directive> = vec![];
+
+    let files = fs::read_dir(file_paths.include_dir.clone())?;
+    let mut beanfiles = Vec::new();
+
+    // Iterate over the directory entries
+    for file in files {
+        let entry = file?;
+        let path = entry.path();
+
+        // Check if the path is a file and has a .csv extension
+        if path.is_file() && path.extension().and_then(std::ffi::OsStr::to_str) == Some("beancount")
+        {
+            beanfiles.push(path);
+        }
+    }
+
+    for beanfile in beanfiles {
+        let subpath = extract_last_two_components(&beanfile)?;
+        let include_path = &subpath.to_string_lossy().to_string()[1..];
+        directives.push(Directive::Include(include_path.to_string()));
+    }
+
+    Ok(directives)
+}
+
+fn extract_last_two_components(path: &Path) -> Result<PathBuf, Error> {
+    let components: Vec<_> = path.components().collect();
+
+    if components.len() >= 2 {
+        let last_two = components[components.len() - 2..components.len()].iter();
+        let mut subpath = PathBuf::new();
+        subpath.push("/");
+        for component in last_two {
+            subpath.push(component.as_os_str());
+        }
+        Ok(subpath)
+    } else {
+        Err(Error::InvalidFileName(
+            path.to_path_buf().to_string_lossy().to_string(),
+        ))
+    }
 }
 
 fn write_directives(file: &mut File, directives: Vec<Directive>) -> Result<(), Error> {
