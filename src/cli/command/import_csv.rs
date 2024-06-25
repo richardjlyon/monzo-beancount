@@ -153,7 +153,16 @@ fn generate_directives(records: Vec<Record>, pot_name: &str) -> Result<Vec<Direc
 }
 
 fn prepare_to_posting(record: &Record, pot_name: &str) -> Result<Posting, Error> {
-    let account = if is_transfer(&record.description) {
+    let account = if is_income(&record.category.clone().unwrap_or("".to_string())) {
+        Account {
+            account_type: AccountType::Assets,
+            country: "GBP".to_string(),
+            institution: "Monzo".to_string(),
+            account: "Personal".to_string(),
+            sub_account: None,
+            transaction_id: None,
+        }
+    } else if is_transfer(&record.description) {
         Account {
             account_type: AccountType::Assets,
             country: "GBP".to_string(),
@@ -191,7 +200,17 @@ fn prepare_to_posting(record: &Record, pot_name: &str) -> Result<Posting, Error>
 }
 
 fn prepare_from_posting(record: &Record, pot_name: &str) -> Result<Posting, Error> {
-    let account = if is_transfer(&record.description) {
+    // let category = record.category.clone().unwrap_or("".to_string());
+    let account = if is_income(&record.category.clone().unwrap_or("".to_string())) {
+        Account {
+            account_type: AccountType::Income,
+            country: "GBP".to_string(),
+            institution: "Monzo".to_string(),
+            account: "Personal".to_string(),
+            sub_account: Some("Savings".to_string()),
+            transaction_id: None,
+        }
+    } else if is_transfer(&record.description) {
         Account {
             account_type: AccountType::Assets,
             country: "GBP".to_string(),
@@ -230,6 +249,10 @@ fn prepare_from_posting(record: &Record, pot_name: &str) -> Result<Posting, Erro
 
 fn is_transfer(description: &str) -> bool {
     description.starts_with("Withdrawal") || description.starts_with("Deposit")
+}
+
+fn is_income(category: &str) -> bool {
+    category == "Income"
 }
 
 fn close_account(records: &Vec<Record>, pot_name: &str) -> Directive {

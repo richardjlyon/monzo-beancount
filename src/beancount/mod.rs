@@ -24,6 +24,7 @@ pub struct Beancount {
     pub assets: Option<Vec<Account>>,
     pub liabilities: Option<Vec<Account>>,
     pub income: Option<Vec<Account>>,
+    pub expenses: Option<Vec<Account>>,
 }
 
 /// A struct representing the paths to the Beancount files.
@@ -43,6 +44,7 @@ struct BeanSettings {
     pub assets: Option<Vec<Account>>,
     pub liabilities: Option<Vec<Account>>,
     pub income: Option<Vec<Account>>,
+    pub expenses: Option<Vec<Account>>,
 }
 
 /// Constructors
@@ -75,6 +77,7 @@ impl Beancount {
             assets: settings.assets,
             liabilities: settings.liabilities,
             income: settings.income,
+            expenses: settings.expenses,
         })
     }
 }

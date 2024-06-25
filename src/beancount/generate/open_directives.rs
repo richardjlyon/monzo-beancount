@@ -37,6 +37,7 @@ pub(crate) async fn open_directives() -> Result<Vec<Directive>, Error> {
 
     directives.push(Directive::Comment("Expense accounts".to_string()));
     directives.extend(open_expenses().await?);
+    directives.extend(open_config_expenses().await?);
 
     Ok(directives)
 }
@@ -133,6 +134,23 @@ async fn open_expenses() -> Result<Vec<Directive>, Error> {
             };
             directives.push(Directive::Open(open_date, beanaccount, None));
         }
+    }
+
+    Ok(directives)
+}
+
+async fn open_config_expenses() -> Result<Vec<Directive>, Error> {
+    let bc = Beancount::from_config()?;
+    let open_date = bc.start_date;
+    let mut directives: Vec<Directive> = Vec::new();
+
+    match bc.expenses {
+        Some(expense_accounts) => {
+            for expense_account in expense_accounts {
+                directives.push(Directive::Open(open_date, expense_account, None));
+            }
+        }
+        None => (),
     }
 
     Ok(directives)
