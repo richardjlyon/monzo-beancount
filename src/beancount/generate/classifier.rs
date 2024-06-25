@@ -98,9 +98,6 @@ fn get_filtered_asset_accounts() -> Result<Vec<BeancountAccount>, Error> {
 
 fn is_income_account(account: &str) -> bool {
     let income_accounts = get_filtered_income_accounts().unwrap();
-    if account == "NSI Premium Bonds".to_string() {
-        println!("{:?}", income_accounts);
-    }
     income_accounts.iter().any(|a| a.account == account)
 }
 

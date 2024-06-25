@@ -34,7 +34,7 @@ impl Beancount {
         let mut file = File::create(self.file_paths.main_file.clone())?;
 
         let option_directives = option_directives();
-        let include_directives = include_directives(&self.file_paths)?;
+        let include_directives = include_directives(&self.file_paths, &self.manual_accounts)?;
         let open_directives = open_directives().await?;
         let transaction_directives = google_sheet_directives().await?;
 
@@ -54,11 +54,28 @@ fn option_directives() -> Vec<Directive> {
     ]
 }
 
-fn include_directives(file_paths: &FilePaths) -> Result<Vec<Directive>, Error> {
+fn include_directives(
+    file_paths: &FilePaths,
+    manual_accounts: &Option<Vec<String>>,
+) -> Result<Vec<Directive>, Error> {
     let mut directives: Vec<Directive> = vec![];
 
     let files = fs::read_dir(file_paths.include_dir.clone())?;
     let mut beanfiles = Vec::new();
+
+    // add manual_account from beancount config
+    if manual_accounts.is_some() {
+        for manual_account in manual_accounts.as_ref().unwrap() {
+            let file_path = file_paths.include_dir.join(format!(
+                "{}/{}.beancount",
+                file_paths.include_dir.to_string_lossy(),
+                manual_account
+            ));
+            let subpath = extract_last_two_components(&file_path)?;
+            let include_path = &subpath.to_string_lossy().to_string()[1..];
+            directives.push(Directive::Include(include_path.to_string()));
+        }
+    }
 
     // Iterate over the directory entries
     for file in files {
@@ -155,12 +172,12 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
         None => {}
     }
 
-    // if tx.id == "tx_0000Aew2N55dFgHod1VPco".to_string() {
-    //     println!("TO:");
-    //     println!("{:?}", classify_transaction(tx));
-    //     println!("{:?}", tx);
-    //     println!("{:#?}", account);
-    // }
+    if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
+        println!("TO:");
+        println!("{:?}", classify_transaction(tx));
+        println!("{:?}", tx);
+        println!("{:#?}", account);
+    }
 
     Ok(Posting {
         account,
@@ -210,12 +227,12 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
         None => {}
     }
 
-    // if tx.id == "tx_0000Aew2N55dFgHod1VPco".to_string() {
-    //     println!("\nFROM:");
-    //     println!("{:?}", classify_transaction(tx));
-    //     println!("{:?}", tx);
-    //     println!("{:#?}", account);
-    // }
+    if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
+        println!("\nFROM:");
+        println!("{:?}", classify_transaction(tx));
+        println!("{:?}", tx);
+        println!("{:#?}", account);
+    }
 
     Ok(Posting {
         account,
