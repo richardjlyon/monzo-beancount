@@ -81,8 +81,8 @@ fn asset_account_finder(account_to_find: &str) -> Option<BeancountAccount> {
 }
 
 fn get_filtered_asset_accounts() -> Result<Vec<BeancountAccount>, Error> {
-    let bc = Beancount::from_config()?;
-    let assets = bc.assets.unwrap();
+    let bc = Beancount::from_user_config()?;
+    let assets = bc.user_settings.assets.unwrap();
     // FIXME: This is a temporary solution to filter out unwanted accounts. Refactor to use config data.
     let unwanted_accounts = ["Business", "Personal"];
 
@@ -117,8 +117,8 @@ fn income_account_finder(account_to_find: &str) -> Option<BeancountAccount> {
 
 /// Get the income accounts from config and remove the main accounts.
 fn get_filtered_income_accounts() -> Result<Vec<BeancountAccount>, Error> {
-    let bc = Beancount::from_config()?;
-    let income = bc.income.unwrap();
+    let bc = Beancount::from_user_config()?;
+    let income = bc.user_settings.income.unwrap();
     // FIXME: This is a temporary solution to filter out unwanted accounts. Refactor to use config data.
     let unwanted_accounts = ["Business", "Personal"];
 

@@ -50,7 +50,7 @@ struct Record {
 
 /// Imports the CSV files from the `import` directory and generates Beancount files.
 pub async fn import() -> Result<(), Error> {
-    let bean = Beancount::from_config()?;
+    let bean = Beancount::from_user_config()?;
     let file_paths = bean.file_paths;
     let csv_files = get_csv_files(&file_paths.import_dir)?;
 

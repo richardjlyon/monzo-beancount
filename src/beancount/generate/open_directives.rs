@@ -42,7 +42,7 @@ pub(crate) async fn open_directives() -> Result<Vec<Directive>, Error> {
 }
 
 fn open_equity_account() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
+    let bc = Beancount::from_user_config()?;
     let mut directives: Vec<Directive> = Vec::new();
 
     let equity_account = Account {
@@ -54,17 +54,21 @@ fn open_equity_account() -> Result<Vec<Directive>, Error> {
         transaction_id: None,
     };
 
-    directives.push(Directive::Open(bc.start_date, equity_account.clone(), None));
+    directives.push(Directive::Open(
+        bc.user_settings.start_date,
+        equity_account.clone(),
+        None,
+    ));
 
     Ok(directives)
 }
 
 fn open_config_assets() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
+    let bc = Beancount::from_user_config()?;
+    let open_date = bc.user_settings.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    if let Some(asset_accounts) = bc.assets {
+    if let Some(asset_accounts) = bc.user_settings.assets {
         for asset_account in asset_accounts {
             directives.push(Directive::Open(open_date, asset_account, None));
         }
@@ -74,11 +78,11 @@ fn open_config_assets() -> Result<Vec<Directive>, Error> {
 }
 
 fn open_config_income() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
+    let bc = Beancount::from_user_config()?;
+    let open_date = bc.user_settings.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    if let Some(income_account) = bc.income {
+    if let Some(income_account) = bc.user_settings.income {
         for income_account in income_account {
             directives.push(Directive::Open(open_date, income_account, None));
         }
@@ -89,16 +93,16 @@ fn open_config_income() -> Result<Vec<Directive>, Error> {
 
 // Open a liability account for each config file entity
 async fn open_config_liabilities() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
+    let bc = Beancount::from_user_config()?;
+    let open_date = bc.user_settings.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    if bc.liabilities.is_none() {
+    if bc.user_settings.liabilities.is_none() {
         return Ok(directives);
     }
 
     // open configured liabilities
-    for account in bc.liabilities.unwrap() {
+    for account in bc.user_settings.liabilities.unwrap() {
         directives.push(Directive::Open(open_date, account, None));
     }
 
@@ -107,8 +111,8 @@ async fn open_config_liabilities() -> Result<Vec<Directive>, Error> {
 
 // Open expense accounts for each Category in the Google Sheets
 async fn open_expenses() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
+    let bc = Beancount::from_user_config()?;
+    let open_date = bc.user_settings.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
     let accounts = load_sheets()?;
@@ -133,11 +137,11 @@ async fn open_expenses() -> Result<Vec<Directive>, Error> {
 }
 
 async fn open_config_expenses() -> Result<Vec<Directive>, Error> {
-    let bc = Beancount::from_config()?;
-    let open_date = bc.start_date;
+    let bc = Beancount::from_user_config()?;
+    let open_date = bc.user_settings.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    if let Some(expense_accounts) = bc.expenses {
+    if let Some(expense_accounts) = bc.user_settings.expenses {
         for expense_account in expense_accounts {
             directives.push(Directive::Open(open_date, expense_account, None));
         }

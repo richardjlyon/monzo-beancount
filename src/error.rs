@@ -26,6 +26,9 @@ pub enum AppError {
     #[error("Invalid file name: {0}")]
     InvalidFileName(String),
 
-    #[error("Can't get home directory")]
-    _HomeDirError,
+    #[error("Can't get home directory {0}")]
+    _HomeDirError(String),
+
+    #[error("Application error: {0}")]
+    ApplicationError(String),
 }
