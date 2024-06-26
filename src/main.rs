@@ -1,5 +1,10 @@
 //! # Monzo Beancount
 //!
+//! [Monzo bank](https://monzo.com/) offers a feature that allows users to export their transaction data directly to Google Sheets. This
+//! integration simplifies the process of tracking and analyzing personal finances by automatically updating
+//! a Google Sheet with real-time transaction details. Users can set up this feature through the Monzo app,
+//! enabling seamless synchronization of their banking transactions with their spreadsheet.
+//!
 //! [Beancount](https://beancount.github.io/docs/the_double_entry_counting_method.html) is a text-based double-entry
 //! accounting system that facilitates precise tracking of financial
 //! transactions using a straightforward and readable format. Each transaction in Beancount involves at least
@@ -9,11 +14,6 @@
 //! files are easy to edit with any text editor, and its functionality can be extended with plugins
 //! for custom features or data integration. This makes Beancount ideal for both personal finance management
 //! and small business accounting.
-//!
-//! [Monzo bank](https://monzo.com/) offers a feature that allows users to export their transaction data directly to Google Sheets. This
-//! integration simplifies the process of tracking and analyzing personal finances by automatically updating
-//! a Google Sheet with real-time transaction details. Users can set up this feature through the Monzo app,
-//! enabling seamless synchronization of their banking transactions with their spreadsheet.
 //!
 //! **Monzo Beancount** is a command line interface app that leverages the Monzo-Google Sheets integration to generate Beancount
 //! accounting files from Monzo transaction data. The tool reads transaction details from a Google Sheet,

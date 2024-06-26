@@ -1,0 +1,13 @@
+site_name: Monzo Beancount
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Configuration: configuration.md
+  - Import: import.md
+  - Commands: commands.md
+
+theme:
+  name: material
+  palette:
+    primary: pink
