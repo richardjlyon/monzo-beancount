@@ -2,6 +2,8 @@
 
 A rust application to convert Monzo transactions to Beancount format.
 
+![screeshot](docs/images/monzo-beancount-screenshot.jpg)
+
 ## Installation
 
 ```bash
@@ -10,8 +12,8 @@ cargo install --git https://github.com/richardjlyon/monzo-beancount
 
 ## Documentation
 
-[](https://richardjlyon.github.io/monzo-beancount/)
-[crates]()
+[Docs](https://richardjlyon.github.io/monzo-beancount/)
+[crates.io]()
 
 ## Usage
 

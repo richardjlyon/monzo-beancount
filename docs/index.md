@@ -1,4 +1,6 @@
-# Welcome to MkDocs
+# Welcome to Monzo Beanount
+
+![screenshot](images/monzo-beancount-screenshot.jpg)
 
 [Monzo bank](https://monzo.com/) offers a feature that allows users to export their transaction data directly to Google Sheets. This
 integration simplifies the process of tracking and analyzing personal finances by automatically updating
