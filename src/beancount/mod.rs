@@ -68,7 +68,6 @@ impl Beancount {
 
         let home_folder = application_settings.root_dir.clone();
         let file_paths = Self::initialise_filesystem(application_settings.root_dir.clone())?;
-
         let user_settings = get_user_settings(home_folder)?;
 
         Ok(Beancount {

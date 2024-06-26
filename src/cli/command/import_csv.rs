@@ -43,7 +43,7 @@ struct Record {
     date: NaiveDate,
     description: String,
     amount: f64,
-    _local_currency: Option<String>,
+    local_currency: Option<String>,
     local_amount: Option<f64>,
     category: Option<String>,
 }
@@ -280,12 +280,26 @@ fn close_account(records: &[Record], pot_name: &str) -> Directive {
 }
 
 fn prepare_transaction(postings: &Postings, tx: &Record) -> BeancountTransaction {
-    let comment = tx.local_amount.map(|a| a.to_string());
     let date = tx.date;
-    let notes = tx.description.clone();
+    let mut notes = tx.description.clone();
+
+    // Convert local_amount to string or initialize to empty string if None.
+    let mut comment = tx.local_amount.map_or(String::new(), |a| a.to_string());
+
+    // Append local_amount and local_currency to notes if both are Some.
+    if let (Some(local_amount), Some(local_currency)) =
+        (tx.local_amount, tx.local_currency.as_ref())
+    {
+        notes += &format!(" {} {}", local_amount, local_currency);
+    }
+
+    // Remove everything from "Amount" onwards in comment if found.
+    if let Some(index) = comment.find("Amount") {
+        comment.truncate(index);
+    }
 
     BeancountTransaction {
-        comment,
+        comment: Some(comment),
         date,
         notes,
         postings: postings.clone(),
