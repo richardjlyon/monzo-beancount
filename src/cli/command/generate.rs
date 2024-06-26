@@ -1,4 +1,5 @@
-//! Generate beancount files command.
+//! (Re)generate the main beancount file.
+
 use crate::{beancount::Beancount, error::AppError as Error};
 
 pub async fn generate() -> Result<(), Error> {

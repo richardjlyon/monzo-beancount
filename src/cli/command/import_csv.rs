@@ -1,13 +1,18 @@
-//! Process CSV files command.
+//! Convert CSV files to beancount files and place in the `include` directory.
 //!
 //! Process a set of CSV files and generate Beancount directives. The CSV files are expected to be
 //! in a specific format, with the following columns:
-//! - date: the date of the transaction
-//! - description: a description of the transaction
-//! - amount: the amount of the transaction in the account's currency
-//! - local_currency: the currency of the transaction
-//! - local_amount: the amount of the transaction in the local currency
-//! - category: the category of the transaction
+//!
+//! ```text
+//! date,description,amount,local_currency,local_amount,category
+//! 2024-04-14,PATH TAPP PAYGO CP NEW JERSEY USA,-0.8,USD,-1.0,Transport
+//! ```
+//! - **date**: the date of the transaction
+//! - **description**: a description of the transaction
+//! - **amount**: the amount of the transaction in the account's currency
+//! - **local_currency**: the currency of the transaction
+//! - **local_amount**: the amount of the transaction in the local currency
+//! - **category**: the category of the transaction
 //!
 
 use std::fs::{self, File};
@@ -33,6 +38,7 @@ use crate::{
 };
 
 #[derive(Debug, Deserialize, Clone)]
+/// Represents a single transaction record.
 struct Record {
     date: NaiveDate,
     description: String,
@@ -42,6 +48,7 @@ struct Record {
     category: Option<String>,
 }
 
+/// Imports the CSV files from the `import` directory and generates Beancount files.
 pub async fn import() -> Result<(), Error> {
     let bean = Beancount::from_config()?;
     let file_paths = bean.file_paths;

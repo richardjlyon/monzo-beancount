@@ -1,4 +1,4 @@
-//! Functionality for accessing a Google Sheet
+//! Authenticates and accesses a Google Sheet.
 //!
 
 pub mod config;
@@ -18,7 +18,7 @@ use transactions::Transaction;
 
 use crate::error::AppError;
 
-/// A struct for accessing a Google Sheet.
+/// A struct for representing a Google Sheet.
 pub struct GoogleSheet {
     pub hub: Sheets<HttpsConnector<HttpConnector>>,
     pub account: GoogleAccount,

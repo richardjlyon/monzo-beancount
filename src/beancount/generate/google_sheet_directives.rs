@@ -1,9 +1,9 @@
 //! Process Google Sheet inputs and generate transaction directives.
 
+use crate::beancount::google::config::load_sheets;
+use crate::beancount::google::GoogleSheet;
 use crate::beancount::{directive::Directive, transaction::Postings};
 use crate::error::AppError as Error;
-use crate::google::config::load_sheets;
-use crate::google::GoogleSheet;
 
 use super::{prepare_from_posting, prepare_to_posting, prepare_transaction};
 

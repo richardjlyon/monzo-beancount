@@ -1,18 +1,19 @@
-//! Beancount export
+//! Manages the generation of Beancount files and related file operations.
 //!
 //! This module generates a set of accounts in Beancount format from financial information
-//! stored in the database.
+//! stored in a Monzo Google sheet.
 
 pub mod account;
 pub mod directive;
 pub mod generate;
+pub mod google;
 pub mod transaction;
 
 use std::path::PathBuf;
 
 use account::Account;
 use chrono::NaiveDate;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::error::AppError as Error;
 
@@ -27,7 +28,7 @@ pub struct Beancount {
     pub expenses: Option<Vec<Account>>,
 }
 
-/// A struct representing the paths to the Beancount files.
+/// A struct representing the paths to the Beancount files
 #[derive(Debug)]
 pub(crate) struct FilePaths {
     pub main_file: PathBuf,
@@ -36,9 +37,9 @@ pub(crate) struct FilePaths {
     pub import_dir: PathBuf,
 }
 
-/// A struct representing a Beancount configuration file on disk.
-#[derive(Debug, Deserialize)]
-struct BeanSettings {
+/// A struct representing a Beancount configuration file on disk
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BeanSettings {
     pub root_dir: PathBuf,
     pub start_date: NaiveDate,
     pub assets: Option<Vec<Account>>,
@@ -84,7 +85,7 @@ impl Beancount {
 
 /// File handling functions
 impl Beancount {
-    pub(crate) fn initialise_filesystem(root_dir: PathBuf) -> Result<FilePaths, Error> {
+    pub fn initialise_filesystem(root_dir: PathBuf) -> Result<FilePaths, Error> {
         // create directories
         const INCLUDE_DIR: &str = "include";
         const IMPORT_DIR: &str = "import";

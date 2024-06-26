@@ -1,3 +1,5 @@
+//! Gets sheets from a Google Sheets Account.
+
 use crate::error::AppError as Error;
 
 use super::GoogleSheet;

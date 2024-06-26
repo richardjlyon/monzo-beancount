@@ -1,4 +1,4 @@
-//! Functionality for processing inputs and producing a set of beancount accounts.
+//! Processes inputs and generates a set of beancount accounts.
 //!
 
 pub(crate) mod classifier;
@@ -14,8 +14,8 @@ use config::Case;
 use convert_case::Casing;
 use rusty_money::{iso, Money};
 
-use crate::google::transactions::Transaction as GoogleTransaction;
-use crate::{error::AppError as Error, google::config::GoogleAccount};
+use crate::beancount::google::transactions::Transaction as GoogleTransaction;
+use crate::{beancount::google::config::GoogleAccount, error::AppError as Error};
 
 use super::FilePaths;
 use super::{

@@ -1,12 +1,11 @@
 //! Generate open directives for the beancount file.
 
-use crate::google::config::load_sheets;
-
 use crate::beancount::account::{Account, AccountType};
 use crate::beancount::directive::Directive;
+use crate::beancount::google::config::load_sheets;
+use crate::beancount::google::GoogleSheet;
 use crate::beancount::Beancount;
 use crate::error::AppError as Error;
-use crate::google::GoogleSheet;
 
 pub(crate) async fn open_directives() -> Result<Vec<Directive>, Error> {
     let mut directives: Vec<Directive> = Vec::new();

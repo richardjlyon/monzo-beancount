@@ -1,4 +1,4 @@
-//! Contains the `Directive` enum and its implementation
+//! Represents a Beancount [directive](https://beancount.github.io/docs/beancount_language_syntax.html#directives_1) and handles formatting.
 
 use chrono::NaiveDate;
 use convert_case::{Case, Casing};
@@ -7,7 +7,7 @@ use super::{account::Account, transaction::Transaction as BeanTransaction};
 
 type Comment = String;
 
-/// Represents a Beancount directive
+/// Represents a Beancount directive.
 #[derive(Debug)]
 pub enum Directive {
     Option(String, String),

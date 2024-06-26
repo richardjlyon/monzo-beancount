@@ -1,3 +1,5 @@
+//! Application errors.
+
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -23,4 +25,7 @@ pub enum AppError {
 
     #[error("Invalid file name: {0}")]
     InvalidFileName(String),
+
+    #[error("Can't get home directory")]
+    HomeDirError,
 }

@@ -1,8 +1,8 @@
-//! Sheets command
+//! Lists available sheets.
 
+use crate::beancount::google::config::load_sheets;
+use crate::beancount::google::GoogleSheet;
 use crate::error::AppError as Error;
-use crate::google::config::load_sheets;
-use crate::google::GoogleSheet;
 
 pub async fn sheets() -> Result<(), Error> {
     let sheets = load_sheets()?;

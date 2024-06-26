@@ -38,7 +38,7 @@ impl GoogleSheet {
 #[cfg(test)]
 
 mod tests {
-    use crate::google::config::load_sheets;
+    use crate::beancount::google::config::load_sheets;
 
     use super::*;
 

@@ -1,8 +1,10 @@
+//! Represents a Beancount transaction and its formatting.
+
 use chrono::NaiveDate;
 
 use super::account::{Account, AccountType};
 
-/// Represents a Beancount transaction
+/// Represents a Beancount transaction.
 #[derive(Debug)]
 pub struct Transaction {
     pub date: NaiveDate,
@@ -11,14 +13,14 @@ pub struct Transaction {
     pub postings: Postings,
 }
 
-/// Represents a Beancount double entry posting
+/// Represents a Beancount double entry posting.
 #[derive(Debug, Clone)]
 pub struct Postings {
     pub to: Posting,
     pub from: Posting,
 }
 
-/// represents a Beancount Liability posting
+/// represents a Beancount Liability posting.
 #[derive(Debug, Clone)]
 pub struct Posting {
     pub account: Account,
@@ -48,7 +50,6 @@ impl Transaction {
     }
 }
 
-// FIXME: Formatting is conditional on self.account.account_type
 impl Posting {
     fn to_formatted_string(&self) -> String {
         let amount = self.amount / 100.0;

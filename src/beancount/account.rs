@@ -1,13 +1,13 @@
-//! Represents a Beancount account type and handles formatting of account names.
+//! Represents a Beancount [account](https://beancount.github.io/docs/the_double_entry_counting_method.html#types-of-accounts) and handles formatting.
 //!
 
 use core::fmt;
 
 use convert_case::{Case, Casing};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-/// Represents permissable Beancount account types
-#[derive(Debug, Clone, Deserialize, Eq, PartialEq, Hash, strum_macros::Display)]
+/// Represents permissable Beancount account types.
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Hash, strum_macros::Display)]
 pub enum AccountType {
     Assets,
     Liabilities,
@@ -16,9 +16,9 @@ pub enum AccountType {
     Equity,
 }
 
-/// Represents a Beancount account
+/// Represents a Beancount account.
 ///
-#[derive(Debug, Deserialize, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq, Hash)]
 pub struct Account {
     pub(crate) account_type: AccountType,
     pub(crate) country: String,

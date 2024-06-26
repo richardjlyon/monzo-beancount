@@ -3,9 +3,9 @@
 use std::collections::HashSet;
 
 use crate::beancount::account::Account as BeancountAccount;
+use crate::beancount::google::transactions::Transaction as GoogleTransaction;
 use crate::beancount::Beancount;
 use crate::error::AppError as Error;
-use crate::google::transactions::Transaction as GoogleTransaction;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum Classification {

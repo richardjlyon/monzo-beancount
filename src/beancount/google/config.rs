@@ -30,7 +30,7 @@ pub fn load_sheets() -> Result<Vec<GoogleAccount>, Error> {
 #[cfg(test)]
 mod tests {
 
-    use crate::google::GoogleSheet;
+    use crate::beancount::google::GoogleSheet;
 
     use super::*;
 
