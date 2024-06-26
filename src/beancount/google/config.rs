@@ -41,6 +41,6 @@ mod tests {
 
         let personal = GoogleSheet::new(sheet).await.unwrap();
 
-        assert!(personal.transactions.unwrap().len() > 0);
+        assert!(!personal.transactions.unwrap().is_empty());
     }
 }

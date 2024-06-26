@@ -64,13 +64,10 @@ fn open_config_assets() -> Result<Vec<Directive>, Error> {
     let open_date = bc.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    match bc.assets {
-        Some(asset_accounts) => {
-            for asset_account in asset_accounts {
-                directives.push(Directive::Open(open_date, asset_account, None));
-            }
+    if let Some(asset_accounts) = bc.assets {
+        for asset_account in asset_accounts {
+            directives.push(Directive::Open(open_date, asset_account, None));
         }
-        None => (),
     }
 
     Ok(directives)
@@ -81,13 +78,10 @@ fn open_config_income() -> Result<Vec<Directive>, Error> {
     let open_date = bc.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    match bc.income {
-        Some(income_account) => {
-            for income_account in income_account {
-                directives.push(Directive::Open(open_date, income_account, None));
-            }
+    if let Some(income_account) = bc.income {
+        for income_account in income_account {
+            directives.push(Directive::Open(open_date, income_account, None));
         }
-        None => (),
     }
 
     Ok(directives)
@@ -143,13 +137,10 @@ async fn open_config_expenses() -> Result<Vec<Directive>, Error> {
     let open_date = bc.start_date;
     let mut directives: Vec<Directive> = Vec::new();
 
-    match bc.expenses {
-        Some(expense_accounts) => {
-            for expense_account in expense_accounts {
-                directives.push(Directive::Open(open_date, expense_account, None));
-            }
+    if let Some(expense_accounts) = bc.expenses {
+        for expense_account in expense_accounts {
+            directives.push(Directive::Open(open_date, expense_account, None));
         }
-        None => (),
     }
 
     Ok(directives)

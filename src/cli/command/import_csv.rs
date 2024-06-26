@@ -17,7 +17,7 @@
 
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use chrono::NaiveDate;
 use config::Case;
@@ -43,7 +43,7 @@ struct Record {
     date: NaiveDate,
     description: String,
     amount: f64,
-    local_currency: Option<String>,
+    _local_currency: Option<String>,
     local_amount: Option<f64>,
     category: Option<String>,
 }
@@ -99,7 +99,7 @@ pub(crate) fn process_csv_file(csv_file: &PathBuf) -> Result<Vec<Directive>, Err
 }
 
 // e.g. essential-variable-pot.csv -> EssentialVariablePot
-fn account_name_from_csv_file(csv_file: &PathBuf) -> String {
+fn account_name_from_csv_file(csv_file: &Path) -> String {
     let account_name = csv_file
         .file_stem()
         .unwrap()
@@ -110,7 +110,7 @@ fn account_name_from_csv_file(csv_file: &PathBuf) -> String {
 }
 
 // e.g./a/b/include/essential-variable-pot.csv -> /a/b/accounts/essential-variable-pot.beanfile
-fn beanacount_file(csv_file: &PathBuf, file_paths: &FilePaths) -> Result<File, Error> {
+fn beanacount_file(csv_file: &Path, file_paths: &FilePaths) -> Result<File, Error> {
     // Create a new path by iterating over the components of the original path
     let csv_file_name = csv_file
         .file_name()
@@ -121,7 +121,7 @@ fn beanacount_file(csv_file: &PathBuf, file_paths: &FilePaths) -> Result<File, E
     // Change the file name extension
     let beancount_file_name = csv_file_name.replace(".csv", ".beancount");
     let beancount_file_path = file_paths.include_dir.join(beancount_file_name);
-    let beancount_file = File::create(&beancount_file_path)?;
+    let beancount_file = File::create(beancount_file_path)?;
 
     Ok(beancount_file)
 }
@@ -143,33 +143,26 @@ fn generate_directives(records: Vec<Record>, pot_name: &str) -> Result<Vec<Direc
     let mut directives: Vec<Directive> = vec![];
 
     for record in &records {
-        let to_posting = prepare_to_posting(&record, pot_name)?;
-        let from_posting = prepare_from_posting(&record, pot_name)?;
+        let to_posting = prepare_to_posting(record, pot_name)?;
+        let from_posting = prepare_from_posting(record, pot_name)?;
 
         let postings = Postings {
             to: to_posting,
             from: from_posting,
         };
 
-        let transaction = prepare_transaction(&postings, &record);
+        let transaction = prepare_transaction(&postings, record);
 
-        directives.push(Directive::Transaction(transaction));
+        directives.push(Directive::Transaction(Box::new(transaction)));
     }
 
     Ok(directives)
 }
 
 fn prepare_to_posting(record: &Record, pot_name: &str) -> Result<Posting, Error> {
-    let account = if is_income(&record.category.clone().unwrap_or("".to_string())) {
-        Account {
-            account_type: AccountType::Assets,
-            country: "GBP".to_string(),
-            institution: "Monzo".to_string(),
-            account: pot_name.to_string(),
-            sub_account: None,
-            transaction_id: None,
-        }
-    } else if is_transfer(&record.description) {
+    let account = if is_income(&record.category.clone().unwrap_or("".to_string()))
+        || is_transfer(&record.description)
+    {
         Account {
             account_type: AccountType::Assets,
             country: "GBP".to_string(),
@@ -266,7 +259,7 @@ fn is_income(category: &str) -> bool {
     category == "Income"
 }
 
-fn close_account(records: &Vec<Record>, pot_name: &str) -> Directive {
+fn close_account(records: &[Record], pot_name: &str) -> Directive {
     let last_record = records.last().unwrap();
 
     // Close the account
@@ -282,16 +275,13 @@ fn close_account(records: &Vec<Record>, pot_name: &str) -> Directive {
     Directive::Close(
         last_record.date,
         account,
-        Some(format!(
-            "Close {}",
-            pot_name.to_case(Case::Title).to_string()
-        )),
+        Some(format!("Close {}", pot_name.to_case(Case::Title))),
     )
 }
 
 fn prepare_transaction(postings: &Postings, tx: &Record) -> BeancountTransaction {
-    let comment = tx.local_amount.clone().map(|a| a.to_string());
-    let date = tx.date.clone();
+    let comment = tx.local_amount.map(|a| a.to_string());
+    let date = tx.date;
     let notes = tx.description.clone();
 
     BeancountTransaction {

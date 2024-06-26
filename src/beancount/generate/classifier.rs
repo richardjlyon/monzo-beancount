@@ -29,14 +29,14 @@ pub(crate) fn classify_transaction(
                 return Ok(Some(Classification::IncomeAccount(income_account)));
             }
 
-            if is_custom_transfer(&tx) {
+            if is_custom_transfer(tx) {
                 return Ok(Some(Classification::TransferOpeningBalance));
             }
 
-            return Ok(Some(Classification::IncomeGeneral));
+            Ok(Some(Classification::IncomeGeneral))
         }
 
-        "Savings" => return Ok(Some(Classification::Savings)),
+        "Savings" => Ok(Some(Classification::Savings)),
 
         "Transfers" => {
             if tx.payment_type == "Pot transfer" {
@@ -49,13 +49,12 @@ pub(crate) fn classify_transaction(
                 return Ok(Some(Classification::TransferAsset(asset_account)));
             }
 
-            return Ok(Some(Classification::TransferOpeningBalance));
+            Ok(Some(Classification::TransferOpeningBalance))
         }
         _ => Ok(None),
     }
 }
 
-///
 fn is_custom_transfer(tx: &GoogleTransaction) -> bool {
     tx.notes
         .as_ref()
@@ -84,7 +83,8 @@ fn asset_account_finder(account_to_find: &str) -> Option<BeancountAccount> {
 fn get_filtered_asset_accounts() -> Result<Vec<BeancountAccount>, Error> {
     let bc = Beancount::from_config()?;
     let assets = bc.assets.unwrap();
-    let unwanted_accounts = vec!["Business", "Personal"];
+    // FIXME: This is a temporary solution to filter out unwanted accounts. Refactor to use config data.
+    let unwanted_accounts = ["Business", "Personal"];
 
     let unique_accounts: HashSet<BeancountAccount> = assets
         .into_iter()
@@ -119,7 +119,8 @@ fn income_account_finder(account_to_find: &str) -> Option<BeancountAccount> {
 fn get_filtered_income_accounts() -> Result<Vec<BeancountAccount>, Error> {
     let bc = Beancount::from_config()?;
     let income = bc.income.unwrap();
-    let unwanted_accounts = vec!["Business", "Personal"];
+    // FIXME: This is a temporary solution to filter out unwanted accounts. Refactor to use config data.
+    let unwanted_accounts = ["Business", "Personal"];
 
     let unique_accounts: HashSet<BeancountAccount> = income
         .into_iter()

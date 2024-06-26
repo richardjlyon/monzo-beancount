@@ -15,8 +15,8 @@ pub enum Directive {
     Comment(String),
     Open(NaiveDate, Account, Option<Comment>),
     Close(NaiveDate, Account, Option<Comment>),
-    Transaction(BeanTransaction),
-    Balance(NaiveDate, Account),
+    Transaction(Box<BeanTransaction>),
+    _Balance(NaiveDate, Account),
 }
 
 impl Directive {
@@ -36,13 +36,13 @@ impl Directive {
                     Some(c) => format!("; {c}.\n"),
                     None => String::new(),
                 };
-                return format!(
+                format!(
                     "{}{} open {:account_width$} {}\n",
                     comment,
                     date,
                     account.to_string(),
                     currency
-                );
+                )
             }
 
             Directive::Transaction(transaction) => {
@@ -62,7 +62,7 @@ impl Directive {
                 )
             }
 
-            Directive::Balance(_date, _account) => {
+            Directive::_Balance(_date, _account) => {
                 todo!()
             }
         }

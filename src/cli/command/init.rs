@@ -32,8 +32,6 @@ fn create_folders() -> Result<FilePaths, Error> {
 }
 
 fn create_config_file(root_dir: std::path::PathBuf) -> Result<(), Error> {
-    let config_file = root_dir.join("beancount.yaml");
-
     let asset_business = Account {
         account_type: AccountType::Assets,
         country: "GBP".to_string(),
@@ -63,7 +61,7 @@ fn create_config_file(root_dir: std::path::PathBuf) -> Result<(), Error> {
 
     let serialized = serde_yaml::to_string(&settings).unwrap();
     let path = Path::new(&settings.root_dir).join("beancount.yaml");
-    let mut file = File::create(&path).unwrap();
+    let mut file = File::create(path).unwrap();
     file.write_all(serialized.as_bytes()).unwrap();
 
     Ok(())

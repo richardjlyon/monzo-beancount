@@ -65,7 +65,7 @@ impl Beancount {
         let settings = match cfg.try_deserialize::<BeanSettings>() {
             Ok(settings) => settings,
             Err(e) => {
-                println!("{}", e.to_string());
+                println!("{}", e);
                 return Err(Error::ConfigurationError(e));
             }
         };

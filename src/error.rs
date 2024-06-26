@@ -21,11 +21,11 @@ pub enum AppError {
     CategoryParseError(String),
 
     #[error("Command aborted")]
-    AbortError,
+    _AbortError,
 
     #[error("Invalid file name: {0}")]
     InvalidFileName(String),
 
     #[error("Can't get home directory")]
-    HomeDirError,
+    _HomeDirError,
 }

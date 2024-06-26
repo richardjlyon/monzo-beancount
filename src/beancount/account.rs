@@ -38,20 +38,20 @@ impl fmt::Display for Account {
             AccountType::Equity => {
                 write!(
                     f,
-                    "{}{}",
-                    format!("{}", self.account_type),
-                    format!(":{}", self.account.to_case(Case::Pascal)),
+                    "{}:{}",
+                    self.account_type,
+                    self.account.to_case(Case::Pascal),
                 )
             }
             _ => {
                 write!(
                     f,
-                    "{}{}{}{}{}",
-                    format!("{}", self.account_type),
-                    format!(":{}", self.country.to_case(Case::Upper)),
-                    format!(":{}", self.institution.to_case(Case::Pascal)),
-                    format!(":{}", self.account.to_case(Case::Pascal)),
-                    format!("{}", label),
+                    "{}:{}:{}:{}{}",
+                    self.account_type,
+                    self.country.to_case(Case::Upper),
+                    self.institution.to_case(Case::Pascal),
+                    self.account.to_case(Case::Pascal),
+                    label,
                 )
             }
         }

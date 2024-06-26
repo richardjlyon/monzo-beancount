@@ -60,7 +60,7 @@ impl GoogleSheet {
 
         for row in values.iter().skip(1) {
             let transaction = Transaction {
-                id: parse_string(row.get(0)).unwrap_or_default(),
+                id: parse_string(row.first()).unwrap_or_default(),
                 date: parse_date(row[1].clone()),
                 payment_type: parse_string(row.get(3)).unwrap_or_default(),
                 name: parse_string(row.get(4)).unwrap_or_default(),
@@ -84,21 +84,21 @@ fn parse_string(value: Option<&Value>) -> Option<String> {
     value
         .and_then(|v| v.as_str()) // Try to get the &str from Value
         .filter(|s| !s.is_empty())
-        .map(|s| s.replace("/", "_"))
-        .map(|s| s.replace("&", "")) // Check if the string is not empty
+        .map(|s| s.replace('/', "_"))
+        .map(|s| s.replace('&', "")) // Check if the string is not empty
         .map(|s| s.to_string()) // Convert the &str to String
 }
 
 // returns a minor unit currency i.e. "-500.00" -> -50000
 fn parse_float(amount: Value) -> i64 {
-    let cleaned_input = amount.to_string().replace("\"", "").replace(".", "");
+    let cleaned_input = amount.to_string().replace(['"', '.'], "");
     let value: i64 = cleaned_input.parse().expect("Invalid number format");
 
     value
 }
 
 fn parse_date(date: Value) -> NaiveDate {
-    let date_str = date.to_string().replace("\"", "");
+    let date_str = date.to_string().replace('"', "");
     NaiveDate::parse_from_str(&date_str, "%d/%m/%Y").unwrap()
 }
 

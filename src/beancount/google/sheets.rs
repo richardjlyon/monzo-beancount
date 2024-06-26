@@ -13,16 +13,13 @@ impl GoogleSheet {
             .doit()
             .await?;
 
-        let sheets = match result.1.sheets {
-            Some(sheets) => Some(
-                sheets
-                    .iter()
-                    .filter_map(|sheet| sheet.properties.as_ref().and_then(|p| p.title.as_ref()))
-                    .map(|title| title.to_string())
-                    .collect(),
-            ),
-            None => None,
-        };
+        let sheets = result.1.sheets.map(|sheets| {
+            sheets
+                .into_iter()
+                .filter_map(|sheet| sheet.properties.and_then(|p| p.title))
+                .map(|title| title.to_string())
+                .collect()
+        });
 
         Ok(sheets)
     }

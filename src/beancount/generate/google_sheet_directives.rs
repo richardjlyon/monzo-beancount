@@ -46,7 +46,7 @@ async fn post_google_transactions() -> Result<Vec<Directive>, Error> {
 
                 let transaction = prepare_transaction(&postings, tx);
 
-                directives.push(Directive::Transaction(transaction));
+                directives.push(Directive::Transaction(Box::new(transaction)));
             }
         }
     }

@@ -118,8 +118,9 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
     };
     let mut amount = -tx.amount as f64;
 
-    match classify_transaction(tx)? {
-        Some(classification) => match classification {
+    #[allow(clippy::assigning_clones)] // TODO: Remove this
+    if let Some(classification) = classify_transaction(tx)? {
+        match classification {
             Classification::IncomeGeneral => {
                 // OK
                 account.account_type = AccountType::Assets;
@@ -151,8 +152,7 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
                 account.account = asset_account.account.clone();
                 account.sub_account = None;
             }
-        },
-        None => {}
+        }
     }
 
     // if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
@@ -182,8 +182,9 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
         transaction_id: Some(tx.id.clone()),
     };
 
-    match classify_transaction(tx)? {
-        Some(classification) => match classification {
+    #[allow(clippy::assigning_clones)] // TODO: Remove this
+    if let Some(classification) = classify_transaction(tx)? {
+        match classification {
             Classification::IncomeGeneral => {
                 account.account_type = AccountType::Income;
                 amount = -tx.amount as f64;
@@ -206,8 +207,7 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
                 account.account_type = AccountType::Assets;
             }
             Classification::TransferAsset(_asset_account) => {}
-        },
-        None => {}
+        }
     }
 
     // if tx.id == "tx_0000AhhIR9JeIvqoOGZt35".to_string() {
@@ -227,7 +227,7 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
 
 fn prepare_transaction(postings: &Postings, tx: &GoogleTransaction) -> BeancountTransaction {
     let comment = prepare_transaction_comment(tx);
-    let date = tx.date.clone();
+    let date = tx.date;
     let notes = prepare_transaction_notes(tx);
 
     BeancountTransaction {
@@ -246,22 +246,15 @@ fn prepare_transaction_comment(tx: &GoogleTransaction) -> Option<String> {
 }
 
 fn prepare_transaction_notes(tx: &GoogleTransaction) -> String {
-    let mut merchant_name = tx.name.clone();
-
-    // FIXME remove id after debugging
-    // merchant_name = format!("{} - {}", merchant_name, tx.id);
-
-    merchant_name
+    tx.name.clone()
 }
 
 fn prepare_amount(tx: &GoogleTransaction) -> String {
     if tx.currency == tx.local_currency {
         String::new()
+    } else if let Some(iso_code) = iso::find(&tx.local_currency) {
+        format!("{}", Money::from_minor(tx.local_amount, iso_code))
     } else {
-        if let Some(iso_code) = iso::find(&tx.local_currency) {
-            format!("{}", Money::from_minor(tx.local_amount, iso_code))
-        } else {
-            format!("{} {}", tx.local_amount, tx.local_currency)
-        }
+        format!("{} {}", tx.local_amount, tx.local_currency)
     }
 }

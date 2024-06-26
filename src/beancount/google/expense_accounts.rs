@@ -14,7 +14,7 @@ impl GoogleSheet {
             None => return Ok(vec![]),
         };
 
-        let filter_categories = vec![
+        let filter_categories = [
             "Income".to_string(),
             "Savings".to_string(),
             "Transfers".to_string(),
@@ -50,6 +50,6 @@ mod tests {
         let sheet = GoogleSheet::new(account).await.unwrap();
 
         let expense_accounts = sheet.expense_accounts().await.unwrap();
-        assert!(expense_accounts.len() > 0);
+        assert!(!expense_accounts.is_empty());
     }
 }
