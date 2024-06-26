@@ -12,8 +12,8 @@ cargo install --git https://github.com/richardjlyon/monzo-beancount
 
 ## Documentation
 
-[Docs](https://richardjlyon.github.io/monzo-beancount/)
-[crates.io]()
+- [Docs](https://richardjlyon.github.io/monzo-beancount/)
+- [crates.io]()
 
 ## Usage
 

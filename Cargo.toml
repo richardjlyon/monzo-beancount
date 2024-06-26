@@ -1,7 +1,15 @@
 [package]
-name = "beancount"
+name = "monzo-beancount"
 version = "0.1.0"
+authors = ["Richard Lyon"]
 edition = "2021"
+description = "A command line application to convert Monzo transactions to Beancount format."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/richardjlyon/monzo-beancount"
+readme = "README.md"
+documentation = "https://richardjlyon.github.io/monzo-beancount/"
+keywords = ["monzo", "cli", "beancount"]
+default-run = "monzo-beancount"
 
 [dependencies]
 chrono = "0.4.38"
