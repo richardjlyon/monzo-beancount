@@ -82,6 +82,10 @@ async fn main() -> Result<(), AppError> {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),
         },
+        Commands::Server {} => match command::server().await {
+            Ok(_) => {}
+            Err(e) => eprintln!("Error: {}", e),
+        },
     }
 
     Ok(())

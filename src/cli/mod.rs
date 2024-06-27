@@ -23,4 +23,6 @@ pub enum Commands {
     Sheets {},
     /// Import CSV files
     Import {},
+    /// Server
+    Server {},
 }

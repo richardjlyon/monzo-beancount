@@ -155,7 +155,7 @@ fn construct_app_settings_filepath() -> Result<PathBuf, Error> {
         Error::ApplicationError("Couldn't open system Application Support directory".to_string())
     })?;
     let application_dir = application_support_dir.join("Beancount");
-    let _ = fs::create_dir_all(application_dir.clone())?;
+    fs::create_dir_all(application_dir.clone())?;
 
     let settings_file = application_dir.join("settings.yaml");
 
