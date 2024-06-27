@@ -33,7 +33,7 @@ pub struct CategorySplit {
 }
 
 impl GoogleSheet {
-    pub fn transactions(&self) -> Option<&Vec<Transaction>> {
+    pub async fn transactions(&self) -> Option<&Vec<Transaction>> {
         self.transactions.as_ref()
     }
 

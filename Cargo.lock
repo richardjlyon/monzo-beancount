@@ -1290,6 +1290,7 @@ dependencies = [
  "csv",
  "dialoguer",
  "dirs",
+ "futures",
  "google-sheets4",
  "hyper 1.3.1",
  "hyper-rustls 0.27.2",

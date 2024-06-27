@@ -10,8 +10,6 @@ use crate::error::AppError as Error;
 pub(crate) async fn open_directives() -> Result<Vec<Directive>, Error> {
     let mut directives: Vec<Directive> = Vec::new();
 
-    println!("creating open directives");
-
     // -- Open Equity Accounts -----------------------------------------------------
 
     directives.push(Directive::Comment("equity accounts".to_string()));
