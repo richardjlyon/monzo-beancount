@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  beancount:
+    build: .
+    volumes:
+      - /Users/richardlyon/Documents/beancount:/data
+      - secrets:/secrets
+volumes:
+  #   data:
+  secrets:

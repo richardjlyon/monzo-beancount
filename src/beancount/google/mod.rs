@@ -36,7 +36,7 @@ pub struct GoogleSheetAccount {
 impl GoogleSheet {
     /// Create an authenticated GoogleSheet instance.
     pub async fn new(account: GoogleSheetAccount) -> Result<Self, Error> {
-        let secret_file = File::open("credentials.json").unwrap();
+        let secret_file = File::open("/data/credentials.json").unwrap();
         let reader = BufReader::new(secret_file);
         let secret: oauth2::ApplicationSecret = serde_json::from_reader(reader).unwrap();
 
@@ -44,7 +44,7 @@ impl GoogleSheet {
             secret,
             oauth2::InstalledFlowReturnMethod::HTTPRedirect,
         )
-        .persist_tokens_to_disk("tokencache.json")
+        .persist_tokens_to_disk("/data/tokencache.json")
         .build()
         .await?;
 

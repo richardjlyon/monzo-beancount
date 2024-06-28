@@ -54,7 +54,7 @@ mod beancount;
 mod cli;
 mod error;
 
-use std::{env, path::PathBuf};
+use std::{env, path::PathBuf, thread, time::Duration};
 
 use clap::Parser;
 use cli::{command, Cli, Commands};
@@ -64,8 +64,27 @@ use error::AppError as Error;
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    // Determine which .env file to load
-    let env_file = env::var("ENV_FILE").unwrap_or_else(|_| ".env.dev".to_string());
+    // Determine the environment
+    let environment = env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
+    println!("->> Running in {} environment", environment);
+
+    // Choose the appropriate .env file based on the environment
+    let env_file = match environment.as_str() {
+        "production" => "/app/.env",
+        _ => ".env.dev",
+    };
+
+    println!("->> Loading environment variables from: {}", env_file);
+
+    // Enter a permanent loop
+    // loop {
+    //     // Your code to be executed repeatedly goes here
+    //     println!("Looping forever...");
+
+    //     // Sleep for a while to avoid busy waiting
+    //     thread::sleep(Duration::from_secs(5));
+    // }
+
     let path = PathBuf::from(env_file);
 
     // Load environment variables from the specified file

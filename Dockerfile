@@ -1,0 +1,33 @@
+# Base image
+FROM clux/muslrust:nightly as chef
+RUN cargo install cargo-chef
+WORKDIR /app
+
+# Set up cargo chef: see https://github.com/LukeMathWalker/cargo-chef
+FROM chef as planner
+COPY . .
+RUN ls
+RUN cargo chef prepare
+
+# Build the application
+FROM chef as cacher
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook -p monzo-beancount --release
+
+# Copy files and build the application
+FROM chef as builder
+COPY . .
+COPY --from=cacher /app/target target
+RUN cargo build --release -p monzo-beancount
+
+FROM alpine
+
+# Build
+COPY --from=builder /app/target/aarch64-unknown-linux-musl/release/monzo-beancount /monzo-beancount
+COPY data /data
+COPY .env.prod /app/.env
+
+ENV ENVIRONMENT=production
+
+
+CMD ["/monzo-beancount", "server"]
