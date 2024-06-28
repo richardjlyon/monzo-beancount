@@ -5,23 +5,25 @@ use crate::{beancount::Beancount, error::AppError as Error};
 use tokio::signal;
 use tokio::time::{self, Duration};
 
-pub async fn server() -> Result<(), Error> {
-    if let Err(e) = generate_bean_periodically().await {
+pub async fn server(beancount: &Beancount, interval_secs: u64) -> Result<(), Error> {
+    if let Err(e) = generate_bean_periodically(beancount, interval_secs).await {
         eprintln!("Error: {:?}", e);
     }
     Ok(())
 }
 
-async fn generate_bean_periodically() -> Result<(), Error> {
-    let mut interval = time::interval(Duration::from_secs(10));
-    let bean = Beancount::from_user_config()?;
+async fn generate_bean_periodically(
+    beancount: &Beancount,
+    interval_secs: u64,
+) -> Result<(), Error> {
+    let mut interval = time::interval(Duration::from_secs(interval_secs));
 
     loop {
         println!("->> refreshing...");
         tokio::select! {
             _ = interval.tick() => {
-                if let Err(e) = bean.generate().await {
-                    eprintln!("Error generating bean: {:?}", e);
+                if let Err(e) = beancount.generate().await {
+                    eprintln!("Error generating beanfile: {:?}", e);
                 }
             }
             _ = signal::ctrl_c() => {

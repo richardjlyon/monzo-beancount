@@ -2,8 +2,7 @@
 /target
 credentials.json
 tokencache.json
-google_accounts.yaml
+/data
 
-beancount.yaml
 /site
 scratch.md

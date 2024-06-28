@@ -24,5 +24,9 @@ pub enum Commands {
     /// Import CSV files
     Import {},
     /// Server
-    Server {},
+    Server {
+        /// Interval in seconds
+        #[arg(short, long, default_value_t = 15)]
+        interval_secs: u64,
+    },
 }

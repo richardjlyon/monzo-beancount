@@ -2,9 +2,9 @@
 
 use std::collections::HashSet;
 
-use super::GoogleSheet;
-
 use crate::error::AppError as Error;
+
+use super::GoogleSheet;
 
 impl GoogleSheet {
     /// Get the list of expense accounts for a Google Account Sheet.
@@ -38,14 +38,18 @@ impl GoogleSheet {
 #[cfg(test)]
 
 mod tests {
-    use crate::beancount::google::config::load_sheets;
+    use std::path::PathBuf;
+
+    use crate::beancount::Beancount;
 
     use super::*;
 
     #[tokio::test]
-    #[ignore]
     async fn expense_accounts() {
-        let accounts = load_sheets().unwrap();
+        let data_dir = PathBuf::from("/Users/richardlyon/dev/rust-monzo-beancount/data");
+        let bc = Beancount::with_data_dir(data_dir).expect("Failed to create Beancount instance");
+        let accounts = bc.user_settings.googlesheet_accounts.unwrap();
+
         let account = accounts[0].clone();
         let sheet = GoogleSheet::new(account).await.unwrap();
 

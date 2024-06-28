@@ -25,8 +25,9 @@ use convert_case::Casing;
 use csv::Reader;
 use serde::Deserialize;
 
+use crate::beancount::datafile_paths::DataFilePaths;
 use crate::beancount::transaction::Postings;
-use crate::beancount::FilePaths;
+
 use crate::{
     beancount::{
         account::{Account, AccountType},
@@ -49,14 +50,12 @@ struct Record {
 }
 
 /// Imports the CSV files from the `import` directory and generates Beancount files.
-pub async fn import() -> Result<(), Error> {
-    let bean = Beancount::from_user_config()?;
-    let file_paths = bean.file_paths;
-    let csv_files = get_csv_files(&file_paths.import_dir)?;
+pub async fn import(beancount: &Beancount) -> Result<(), Error> {
+    let csv_files = get_csv_files(&beancount.data_file_paths.import_dir)?;
 
     for csv_file in csv_files {
         let directives = process_csv_file(&csv_file)?;
-        let mut beancount_file = beanacount_file(&csv_file, &file_paths)?;
+        let mut beancount_file = beanacount_file(&csv_file, &beancount.data_file_paths)?;
         write_directives(&mut beancount_file, directives)?;
     }
 
@@ -110,7 +109,7 @@ fn account_name_from_csv_file(csv_file: &Path) -> String {
 }
 
 // e.g./a/b/include/essential-variable-pot.csv -> /a/b/accounts/essential-variable-pot.beanfile
-fn beanacount_file(csv_file: &Path, file_paths: &FilePaths) -> Result<File, Error> {
+fn beanacount_file(csv_file: &Path, file_paths: &DataFilePaths) -> Result<File, Error> {
     // Create a new path by iterating over the components of the original path
     let csv_file_name = csv_file
         .file_name()

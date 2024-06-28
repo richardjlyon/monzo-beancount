@@ -1,45 +1,55 @@
 //! Process Google Sheet inputs and generate transaction directives.
 
-use crate::beancount::google::config::load_sheets;
-use crate::beancount::google::GoogleSheet;
+use crate::beancount::google::{GoogleSheet, GoogleSheetAccount};
+use crate::beancount::Beancount;
 use crate::beancount::{directive::Directive, transaction::Postings};
 use crate::error::AppError as Error;
 
 use super::{prepare_from_posting, prepare_to_posting, prepare_transaction};
-use futures::future::join_all;
-use tokio::task;
 
-pub(crate) async fn google_sheet_directives() -> Result<Vec<Directive>, Error> {
+pub(crate) async fn google_sheet_directives(
+    beancount: &Beancount,
+    googlesheet_accounts: &Vec<GoogleSheetAccount>,
+) -> Result<Vec<Directive>, Error> {
     let mut directives: Vec<Directive> = Vec::new();
 
     // -- Post Sheet Transactions---------------------------------------------------------
 
     directives.push(Directive::Comment("transactions".to_string()));
-    directives.extend(post_google_transactions().await?);
+    directives
+        .extend(post_google_transactions(beancount.clone(), googlesheet_accounts.clone()).await?);
 
     Ok(directives)
 }
 
-async fn post_google_transactions() -> Result<Vec<Directive>, Error> {
+async fn post_google_transactions(
+    beancount: Beancount,
+    googlesheet_accounts: Vec<GoogleSheetAccount>,
+) -> Result<Vec<Directive>, Error> {
     let mut directives: Vec<Directive> = Vec::new();
-    let accounts = load_sheets()?;
+    let income_accounts = match beancount.user_settings.income.clone() {
+        Some(accounts) => accounts,
+        None => return Ok(vec![]),
+    };
 
-    let mut handles = Vec::new();
+    let asset_accounts = match beancount.user_settings.assets.clone() {
+        Some(accounts) => accounts,
+        None => return Ok(vec![]),
+    };
 
-    for account in accounts {
-        let handle = task::spawn(async move {
-            let sheet = GoogleSheet::new(account.clone()).await?;
-            let mut local_directives = Vec::new();
+    for account in googlesheet_accounts {
+        let sheet = GoogleSheet::new(account.clone()).await?;
 
-            if let Some(transactions) = sheet.transactions().await {
-                for tx in transactions {
-                    // NOTE: This is a hack to ignore pot transfers and assumes
-                    // that pot transfers are included separately in `main.beancount`.
-                    if tx.payment_type == "Pot transfer" {
-                        continue;
-                    }
+        if let Some(transactions) = sheet.transactions().await {
+            for tx in transactions {
+                // NOTE: This is a hack to ignore pot transfers and assumes
+                // that pot transfers are included separately in `main.beancount`.
+                if tx.payment_type == "Pot transfer" {
+                    continue;
+                }
 
-                    let from_posting = match prepare_from_posting(&account, tx) {
+                let from_posting =
+                    match prepare_from_posting(&asset_accounts, &income_accounts, &account, tx) {
                         Ok(posting) => posting,
                         Err(e) => {
                             eprintln!(
@@ -50,7 +60,8 @@ async fn post_google_transactions() -> Result<Vec<Directive>, Error> {
                         }
                     };
 
-                    let to_posting = match prepare_to_posting(&account, tx) {
+                let to_posting =
+                    match prepare_to_posting(&asset_accounts, &income_accounts, &account, tx) {
                         Ok(posting) => posting,
                         Err(e) => {
                             eprintln!(
@@ -61,35 +72,14 @@ async fn post_google_transactions() -> Result<Vec<Directive>, Error> {
                         }
                     };
 
-                    let postings = Postings {
-                        from: from_posting,
-                        to: to_posting,
-                    };
+                let postings = Postings {
+                    from: from_posting,
+                    to: to_posting,
+                };
 
-                    let transaction = prepare_transaction(&postings, tx);
+                let transaction = prepare_transaction(&postings, tx);
 
-                    local_directives.push(Directive::Transaction(Box::new(transaction)));
-                }
-            }
-
-            Ok::<Vec<Directive>, Error>(local_directives)
-        });
-
-        handles.push(handle);
-    }
-
-    let results = join_all(handles).await;
-
-    for result in results {
-        match result {
-            Ok(Ok(local_directives)) => {
-                directives.extend(local_directives);
-            }
-            Ok(Err(e)) => {
-                eprintln!("Error processing account: {:?}", e);
-            }
-            Err(e) => {
-                eprintln!("Task failed: {:?}", e);
+                directives.push(Directive::Transaction(Box::new(transaction)));
             }
         }
     }

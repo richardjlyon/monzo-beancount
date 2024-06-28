@@ -1,33 +1,41 @@
 //! Authenticates and accesses a Google Sheet.
 //!
 
-pub mod config;
 pub mod expense_accounts;
 pub mod sheets;
 pub mod transactions;
 
 use std::{fs::File, io::BufReader};
 
-use config::GoogleAccount;
 use google_sheets4::{
     hyper::{self, client::HttpConnector},
     hyper_rustls, oauth2, Sheets,
 };
 use hyper_rustls::HttpsConnector;
+use serde::{Deserialize, Serialize};
 use transactions::Transaction;
 
-use crate::error::AppError;
+use crate::error::AppError as Error;
 
 /// A struct for representing a Google Sheet.
 pub struct GoogleSheet {
     pub hub: Sheets<HttpsConnector<HttpConnector>>,
-    pub account: GoogleAccount,
+    pub account: GoogleSheetAccount,
     pub transactions: Option<Vec<Transaction>>,
 }
 
+/// A struct to represent a Google Sheet account
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GoogleSheetAccount {
+    pub country: String,
+    pub institution: String,
+    pub name: String,
+    pub sheet_name: String,
+    pub sheet_id: String,
+}
 impl GoogleSheet {
     /// Create an authenticated GoogleSheet instance.
-    pub async fn new(account: GoogleAccount) -> Result<Self, AppError> {
+    pub async fn new(account: GoogleSheetAccount) -> Result<Self, Error> {
         let secret_file = File::open("credentials.json").unwrap();
         let reader = BufReader::new(secret_file);
         let secret: oauth2::ApplicationSecret = serde_json::from_reader(reader).unwrap();

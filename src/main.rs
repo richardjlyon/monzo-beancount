@@ -54,12 +54,39 @@ mod beancount;
 mod cli;
 mod error;
 
+use std::{env, path::PathBuf};
+
 use clap::Parser;
 use cli::{command, Cli, Commands};
-use error::AppError;
+use colored::Colorize;
+use dotenvy;
+use error::AppError as Error;
 
 #[tokio::main]
-async fn main() -> Result<(), AppError> {
+async fn main() -> Result<(), Error> {
+    // Determine which .env file to load
+    let env_file = env::var("ENV_FILE").unwrap_or_else(|_| ".env.dev".to_string());
+    let path = PathBuf::from(env_file);
+
+    // Load environment variables from the specified file
+    dotenvy::from_filename(path).expect("Failed to load .env file");
+
+    let data_dir = env::var("DATA_DIR")
+        .map(PathBuf::from)
+        .expect("Failed to get data_dir from .env");
+
+    let bc = match beancount::Beancount::with_data_dir(data_dir) {
+        Ok(b) => b,
+        Err(Error::ConfigurationError(_)) => {
+            println!(
+                "{}",
+                "ERROR: Not configured. Run `monzno-beancount init`".red()
+            );
+            return Err(Error::ApplicationError("Bad Configuration".to_string()));
+        }
+        Err(e) => return Err(e),
+    };
+
     let cli = Cli::parse();
 
     match &cli.command {
@@ -68,21 +95,21 @@ async fn main() -> Result<(), AppError> {
             Err(e) => eprintln!("Error: {}", e),
         },
 
-        Commands::Generate {} => match command::generate().await {
+        Commands::Generate {} => match command::generate(&bc).await {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),
         },
 
-        Commands::Sheets {} => match command::sheets().await {
+        Commands::Sheets {} => match command::sheets(&bc).await {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),
         },
 
-        Commands::Import {} => match command::import().await {
+        Commands::Import {} => match command::import(&bc).await {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),
         },
-        Commands::Server {} => match command::server().await {
+        Commands::Server { interval_secs } => match command::server(&bc, *interval_secs).await {
             Ok(_) => {}
             Err(e) => eprintln!("Error: {}", e),
         },

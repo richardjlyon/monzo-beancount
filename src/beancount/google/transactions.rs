@@ -8,7 +8,7 @@ use serde_json::value::Value;
 
 use crate::error::AppError as Error;
 
-use super::{config::GoogleAccount, GoogleSheet};
+use super::{GoogleSheet, GoogleSheetAccount};
 
 #[derive(Debug, Default, Deserialize)]
 pub struct Transaction {
@@ -39,7 +39,7 @@ impl GoogleSheet {
 
     pub(crate) async fn load_transactions(
         hub: &Sheets<HttpsConnector<HttpConnector>>,
-        account: &GoogleAccount,
+        account: &GoogleSheetAccount,
     ) -> Result<Option<Vec<Transaction>>, Error> {
         let range = format!("{}!A:P", &account.sheet_name);
 

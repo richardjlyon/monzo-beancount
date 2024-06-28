@@ -14,10 +14,11 @@ use config::Case;
 use convert_case::Casing;
 use rusty_money::{iso, Money};
 
+use crate::beancount::generate::google_sheet_directives::google_sheet_directives;
 use crate::beancount::google::transactions::Transaction as GoogleTransaction;
-use crate::{beancount::google::config::GoogleAccount, error::AppError as Error};
+use crate::error::AppError as Error;
 
-use super::FilePaths;
+use super::google::GoogleSheetAccount;
 use super::{
     account::{Account as BeancountAccount, AccountType},
     directive::Directive,
@@ -25,19 +26,23 @@ use super::{
     Beancount,
 };
 
-use google_sheet_directives::google_sheet_directives;
 use open_directives::open_directives;
 
 impl Beancount {
     /// Process the input and produce a set of Beancount accounts
     pub async fn generate(&self) -> Result<(), Error> {
-        let mut file = File::create(self.file_paths.main_file.clone())?;
-
         let option_directives = option_directives();
-        let include_directives = include_directives(&self.file_paths)?;
-        let open_directives = open_directives().await?;
-        let transaction_directives = google_sheet_directives().await?;
 
+        let include_directives = include_directives(self.data_file_paths.include_dir.clone())?;
+
+        let open_directives = open_directives(self.user_settings.clone()).await?;
+
+        let transaction_directives = match &self.user_settings.googlesheet_accounts {
+            Some(a) => google_sheet_directives(self, a).await?,
+            None => vec![],
+        };
+
+        let mut file = File::create(self.data_file_paths.main_file.clone())?;
         write_directives(&mut file, option_directives)?;
         write_directives(&mut file, include_directives)?;
         write_directives(&mut file, open_directives)?;
@@ -54,11 +59,11 @@ fn option_directives() -> Vec<Directive> {
     ]
 }
 
-fn include_directives(file_paths: &FilePaths) -> Result<Vec<Directive>, Error> {
+fn include_directives(include_dir: PathBuf) -> Result<Vec<Directive>, Error> {
     let mut directives: Vec<Directive> = vec![];
-
-    let files = fs::read_dir(file_paths.include_dir.clone())?;
     let mut beanfiles = Vec::new();
+
+    let files = fs::read_dir(include_dir)?;
 
     // Iterate over the directory entries
     for file in files {
@@ -107,7 +112,12 @@ fn write_directives(file: &mut File, directives: Vec<Directive>) -> Result<(), E
     Ok(())
 }
 
-fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result<Posting, Error> {
+fn prepare_to_posting(
+    asset_accounts: &Vec<BeancountAccount>,
+    income_accounts: &Vec<BeancountAccount>,
+    account: &GoogleSheetAccount,
+    tx: &GoogleTransaction,
+) -> Result<Posting, Error> {
     let mut account = BeancountAccount {
         account_type: AccountType::Expenses,
         country: account.country.clone(),
@@ -119,7 +129,7 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
     let mut amount = -tx.amount as f64;
 
     #[allow(clippy::assigning_clones)] // TODO: Remove this
-    if let Some(classification) = classify_transaction(tx)? {
+    if let Some(classification) = classify_transaction(asset_accounts, income_accounts, tx)? {
         match classification {
             Classification::IncomeGeneral => {
                 // OK
@@ -170,7 +180,12 @@ fn prepare_to_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result
     })
 }
 
-fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Result<Posting, Error> {
+fn prepare_from_posting(
+    asset_accounts: &Vec<BeancountAccount>,
+    income_accounts: &Vec<BeancountAccount>,
+    account: &GoogleSheetAccount,
+    tx: &GoogleTransaction,
+) -> Result<Posting, Error> {
     let mut amount = tx.amount as f64;
 
     let mut account = BeancountAccount {
@@ -183,7 +198,7 @@ fn prepare_from_posting(account: &GoogleAccount, tx: &GoogleTransaction) -> Resu
     };
 
     #[allow(clippy::assigning_clones)] // TODO: Remove this
-    if let Some(classification) = classify_transaction(tx)? {
+    if let Some(classification) = classify_transaction(asset_accounts, income_accounts, tx)? {
         match classification {
             Classification::IncomeGeneral => {
                 account.account_type = AccountType::Income;
