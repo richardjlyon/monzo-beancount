@@ -1,0 +1,3 @@
+application:
+  data_dir: /usr/local/beancount/data
+  secrets_dir: /usr/local/beancount/secrets

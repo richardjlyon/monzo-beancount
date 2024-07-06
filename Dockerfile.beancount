@@ -24,10 +24,9 @@ FROM alpine
 
 # Build
 COPY --from=builder /app/target/aarch64-unknown-linux-musl/release/monzo-beancount /monzo-beancount
-COPY data /data
-COPY .env.prod /app/.env
+# COPY secrets /secrets
+COPY configuration /configuration
 
-ENV ENVIRONMENT=production
-
+# ENV APP_ENVIRONMENT production
 
 CMD ["/monzo-beancount", "server"]

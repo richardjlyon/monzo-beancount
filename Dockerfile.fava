@@ -1,0 +1,11 @@
+# Dockerfile for Beancount
+FROM python:3.8-slim
+
+# Install Beancount
+RUN pip install fava
+
+# Set the working directory
+WORKDIR /data
+
+# (Optional) Command to run Beancount (if needed)
+CMD ["fava", "/main.beancount"]

@@ -1,0 +1,3 @@
+application:
+  data_dir: "/Users/richardlyon/SynologyDrive/[01] Areas/[04] Money/[02] banks/Monzo/beancount/data"
+  secrets_dir: "/Users/richardlyon/SynologyDrive/[01] Areas/[04] Money/[02] banks/Monzo/beancount/secrets"

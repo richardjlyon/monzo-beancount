@@ -1,10 +1,22 @@
 version: "3.8"
 services:
   beancount:
-    build: .
+    build:
+      dockerfile: Dockerfile.beancount
     volumes:
-      - /Users/richardlyon/Documents/beancount:/data
-      - secrets:/secrets
+      - ${DATA_PATH}:/data
+      - ${SECRETS_PATH}:/secrets
+
+  fava:
+    build:
+      dockerfile: Dockerfile.fava
+    container_name: fava
+    ports:
+      - "4000:5000"
+    volumes:
+      - ${DATA_PATH}:/data
+    command: ["fava", "/data/main.beancount"]
+
 volumes:
-  #   data:
+  data:
   secrets:

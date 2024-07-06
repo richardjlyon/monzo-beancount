@@ -36,15 +36,20 @@ pub struct GoogleSheetAccount {
 impl GoogleSheet {
     /// Create an authenticated GoogleSheet instance.
     pub async fn new(account: GoogleSheetAccount) -> Result<Self, Error> {
-        let secret_file = File::open("/data/credentials.json").unwrap();
-        let reader = BufReader::new(secret_file);
+        let config =
+            crate::configuration::get_configuration().expect("Failed to read configuration.");
+
+        let credentials_file =
+            File::open(config.application.secrets_dir.join("credentials.json")).unwrap();
+        let token_file = config.application.secrets_dir.join("tokencache.json");
+        let reader = BufReader::new(credentials_file);
         let secret: oauth2::ApplicationSecret = serde_json::from_reader(reader).unwrap();
 
         let auth = oauth2::InstalledFlowAuthenticator::builder(
             secret,
             oauth2::InstalledFlowReturnMethod::HTTPRedirect,
         )
-        .persist_tokens_to_disk("/data/tokencache.json")
+        .persist_tokens_to_disk(token_file)
         .build()
         .await?;
 
